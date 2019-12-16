@@ -34,12 +34,12 @@ class RosterAdapter(
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         val roaster = data[position]
         var offlineMessages: List<Message> = arrayListOf()
-        holder.name.text = roaster.user
+        holder.name.text = roaster.name
         holder.itemView.setOnClickListener {
             listener?.onClick(roaster)
         }
         for (key in map.keys) {
-            if (key.contains(roaster.user)) {
+            if (key.contains(roaster.jid)) {
                 offlineMessages = map[key]!!
             }
 

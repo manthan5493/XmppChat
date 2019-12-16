@@ -239,7 +239,6 @@ class ChatActivity : AppCompatActivity() {
 
         try {
             val slot = manager.requestSlot(file.name, file.length())
-
             val client = UnsafeOkHttpClient.getUnsafeOkHttpClient()
 
             val request = Request.Builder()

@@ -36,7 +36,7 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
         super.onCreate(savedInstanceState)
         Config.roster = Roster.getInstanceFor(Config.conn1)
         Config.roster!!.subscriptionMode = Roster.SubscriptionMode.accept_all
-        Config.conn1!!.addPacketInterceptor(object : StanzaListener {
+        Config.conn1!!.addStanzaInterceptor(object : StanzaListener {
             override fun processStanza(packet: Stanza?) {
                 if (packet is Presence) {
                     Toast.makeText(
@@ -73,11 +73,10 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
         setContentView(R.layout.activity_chat_list)
         val offlineMessageManager = OfflineMessageManager(Config.conn1)
         val map = offlineMessageManager.messages.groupBy { it.from }
-/*
         val presence = Presence(Presence.Type.available)
-        Config.conn1!!.sendStanza(presence)*/
+        Config.conn1!!.sendStanza(presence)
         adapter = RosterAdapter(rosterLists, map)
-        btnAdd.setOnClickListener {
+        imgAddPerson.setOnClickListener {
             val dialog = Dialog(this)
             dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
             val main = LinearLayout(this)
