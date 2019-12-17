@@ -33,6 +33,6 @@ class Config {
         val openfire_host_server_SERVICE = openfire_host_server_SERVICE_DEV
         val API_END_POINT = "https://openfire.brainvire.dev/"
         val CHAT_END_POINT = "openfire.brainvire.dev"
-        val openfire_host_server_CONFERENCE_SERVICE = "conference.//////"
+        val openfire_host_server_CONFERENCE_SERVICE = "conference.openfire.brainvire.dev"
     }
 }

@@ -20,9 +20,13 @@ import org.jivesoftware.smack.roster.Roster
 import org.jivesoftware.smack.roster.RosterEntry
 import org.jivesoftware.smack.roster.RosterListener
 import org.jivesoftware.smack.roster.packet.RosterPacket
+import org.jivesoftware.smackx.muc.MultiUserChatManager
 import org.jivesoftware.smackx.offline.OfflineMessageManager
 import org.jxmpp.jid.Jid
 import org.jxmpp.jid.impl.JidCreate
+import org.jxmpp.jid.parts.Domainpart
+import org.jxmpp.jid.parts.Localpart
+import org.jxmpp.jid.parts.Resourcepart
 
 
 class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener {
@@ -94,7 +98,6 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
             btnParams.topMargin = 40
             btnParams.bottomMargin = 40
 
-            btn.layoutParams
             main.addView(editText)
             main.addView(btn)
             btn.setOnClickListener {
@@ -104,6 +107,30 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
             }
             dialog.setContentView(main)
             dialog.show()
+        }
+
+        imgAddGroup.setOnClickListener {
+            if (!Config.roster!!.isLoaded) {
+                Config.roster?.reloadAndWait()
+                Log.e("Roster :", "Reload and wait")
+            }
+
+            val mucJid = JidCreate.entityBareFrom(
+                Localpart.from("TEST_MUC")
+                , Domainpart.from(Config.openfire_host_server_CONFERENCE_SERVICE)
+            )
+            val multiUserChatManager = MultiUserChatManager.getInstanceFor(Config.conn1)
+
+            val multiUserChat = multiUserChatManager.getMultiUserChat(mucJid)
+            val mucEnterConfiguration =
+                multiUserChat?.getEnterConfigurationBuilder(Resourcepart.from(Config.loginName))!!
+                    .requestNoHistory()
+                    .build()
+
+            if (!multiUserChat.isJoined) {
+                multiUserChat.join(mucEnterConfiguration)
+            }
+
         }
         adapter.setRoasterListener(this)
         rvRoasterList.adapter = adapter
