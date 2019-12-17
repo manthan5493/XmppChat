@@ -236,7 +236,7 @@ class ChatActivity : AppCompatActivity() {
         val file = File(image.path)
         val manager = HttpFileUploadManager.getInstanceFor(Config.conn1)
 //        manager.setTlsContext(SSLContext.getDefault())
-
+//
         try {
             val slot = manager.requestSlot(file.name, file.length())
             val client = UnsafeOkHttpClient.getUnsafeOkHttpClient()
