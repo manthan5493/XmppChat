@@ -347,7 +347,7 @@ class MainActivity : AppCompatActivity() {
             .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
 //            .setSocketFactory(SocketFactory.getDefault())
             .setPort(Config.openfire_host_server_PORT)
-            .setConnectTimeout(5000)
+            .setConnectTimeout(25000)
             .enableDefaultDebugger()
             .setSendPresence(false)
 //            .setDebuggerEnabled(true) // to view what's happening in detail
@@ -357,7 +357,7 @@ class MainActivity : AppCompatActivity() {
         object : AsyncTask<Void, Void, Boolean>() {
             override fun doInBackground(vararg params: Void?): Boolean {
                 val conn1 = XMPPTCPConnection(Config.config)
-                conn1.replyTimeout = 5000
+                conn1.replyTimeout = 25000
                 conn1.addConnectionListener(object : ConnectionListener {
                     override fun connected(connection: XMPPConnection?) {
                         Log.e("CONNECTION", "connected")

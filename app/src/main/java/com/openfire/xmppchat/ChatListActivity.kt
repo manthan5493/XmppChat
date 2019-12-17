@@ -10,13 +10,10 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.android.synthetic.main.activity_chat_list.*
 import org.jivesoftware.smack.SmackException
 import org.jivesoftware.smack.StanzaListener
 import org.jivesoftware.smack.filter.StanzaFilter
-import org.jivesoftware.smack.packet.Message
 import org.jivesoftware.smack.packet.Presence
 import org.jivesoftware.smack.packet.Stanza
 import org.jivesoftware.smack.roster.Roster
@@ -139,7 +136,7 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
     ) {
 
         val intent = Intent(this, ChatActivity::class.java)
-        intent.putExtra("user", entry.user)
+        intent.putExtra("user", entry.jid.asUnescapedString())
         startActivity(intent)
     }
 
