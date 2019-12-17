@@ -15,6 +15,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:text="Create New"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="@+id/barrier"
+        app:layout_constraintEnd_toStartOf="@+id/imgAddGroup"
+        app:layout_constraintStart_toEndOf="@+id/imgAddPerson"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <ImageView
         android:id="@+id/imgAddGroup"
         android:layout_width="wrap_content"
@@ -34,10 +45,30 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvRoasterList"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="275dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/barrier" />
+
+    <TextView
+        android:id="@+id/tvGroupLbl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:text="Group"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rvRoasterList" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvRoasterGroup"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvGroupLbl" />
 </androidx.constraintlayout.widget.ConstraintLayout>
