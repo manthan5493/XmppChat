@@ -24,6 +24,7 @@ import org.jivesoftware.smack.roster.RosterListener
 import org.jivesoftware.smack.roster.packet.RosterPacket
 import org.jivesoftware.smackx.muc.MultiUserChatManager
 import org.jivesoftware.smackx.offline.OfflineMessageManager
+import org.jivesoftware.smackx.xdata.FormField
 import org.jxmpp.jid.Jid
 import org.jxmpp.jid.impl.JidCreate
 import org.jxmpp.jid.parts.Domainpart
@@ -43,7 +44,7 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Config.multiUserChatManager = MultiUserChatManager.getInstanceFor(Config.conn1)
-
+        Config.multiUserChatManager!!.setAutoJoinOnReconnect(true)
         Config.roster = Roster.getInstanceFor(Config.conn1)
         Config.roster!!.subscriptionMode = Roster.SubscriptionMode.accept_all
         Config.conn1!!.addStanzaInterceptor(object : StanzaListener {
@@ -191,11 +192,29 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
                 .requestNoHistory()
                 .build()
 
-        if (!multiUserChat.isJoined) {
-            multiUserChat.join(mucEnterConfiguration)
-        }
-        multiUserChat.changeNickname(Resourcepart.from(groupName))
+        multiUserChat.join(mucEnterConfiguration)
+        multiUserChat.grantOwnership(Config.conn1!!.user)
 
+//        multiUserChat.changeNickname(Resourcepart.from(groupName))
+
+        val form = multiUserChat.configurationForm
+        val submitForm = form.createAnswerForm();
+// Add default answers to the form to submit
+        for (field in form.getFields().iterator()) {
+            if (FormField.Type.hidden != field.type && field.variable != null) {
+// Sets the default value as the answer
+                submitForm.setDefaultAnswer(field.getVariable());
+            }
+        }
+        submitForm.setAnswer("muc#roomconfig_roomname", groupName)
+        submitForm.setAnswer("muc#roomconfig_roomdesc", "$groupName created from Android")
+        submitForm.setAnswer("muc#roomconfig_publicroom", true)
+//        submitForm.setAnswer("muc#roomconfig_persistentroom", "1")
+        submitForm.setAnswer("x-muc#roomconfig_canchangenick", true)
+        submitForm.setAnswer("x-muc#roomconfig_registration", true)
+        submitForm.getField("muc#roomconfig_persistentroom").addValue("1")
+        multiUserChat.sendConfigurationForm(submitForm)
+        getBuddies()
     }
 
 
@@ -272,7 +291,6 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
             groupList.add(GroupInfo(entry, room))
 
         }
-
 
     }
 }

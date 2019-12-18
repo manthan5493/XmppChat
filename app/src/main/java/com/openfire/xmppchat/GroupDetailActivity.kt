@@ -10,15 +10,15 @@ import org.jxmpp.jid.impl.JidCreate
 class GroupDetailActivity : AppCompatActivity() {
 
     var groupId = ""
-    lateinit var room: MultiUserChat
+    lateinit var mucChat: MultiUserChat
     lateinit var adapter: GroupUserAdapter
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_group_detail)
         groupId = intent.getStringExtra("group")
-        room =
+        mucChat =
             Config.multiUserChatManager!!.getMultiUserChat(JidCreate.entityBareFrom(groupId))
-        adapter = GroupUserAdapter(room.participants)
+        adapter = GroupUserAdapter(mucChat.participants)
         rvGroupParticipants.adapter = adapter
 
     }
