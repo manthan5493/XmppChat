@@ -75,6 +75,7 @@ class MainActivity : AppCompatActivity() {
                     accountManager.sensitiveOperationOverInsecureConnection(true)
                     accountManager.createAccount(Localpart.from(userName), password, attributes)
 
+
                     return ""
                 } catch (ex: Exception) {
                     ex.printStackTrace()
@@ -359,6 +360,7 @@ class MainActivity : AppCompatActivity() {
                 val conn1 = XMPPTCPConnection(Config.config)
                 conn1.replyTimeout = 5000
               /*  conn1.addConnectionListener(object : ConnectionListener {
+
                     override fun connected(connection: XMPPConnection?) {
                         Log.e("CONNECTION", "connected")
                     }
@@ -397,6 +399,7 @@ class MainActivity : AppCompatActivity() {
 //                    val ping = PingManager.getInstanceFor(Config.conn1)
 //                    ping.pingInterval = 60
 //                    ping.pingServerIfNecessary()
+
                 } catch (e: Exception) {
                     e.printStackTrace()
                     Log.e("app", e.toString())

@@ -10,10 +10,12 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+
 import kotlinx.android.synthetic.main.activity_chat_list.*
 import org.jivesoftware.smack.SmackException
 import org.jivesoftware.smack.StanzaListener
 import org.jivesoftware.smack.filter.StanzaFilter
+
 import org.jivesoftware.smack.packet.Presence
 import org.jivesoftware.smack.packet.Stanza
 import org.jivesoftware.smack.roster.Roster
@@ -41,6 +43,7 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Config.multiUserChatManager = MultiUserChatManager.getInstanceFor(Config.conn1)
+
         Config.roster = Roster.getInstanceFor(Config.conn1)
         Config.roster!!.subscriptionMode = Roster.SubscriptionMode.accept_all
         Config.conn1!!.addStanzaInterceptor(object : StanzaListener {
@@ -88,6 +91,7 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
             }
         }
 
+
         setContentView(R.layout.activity_chat_list)
         val offlineMessageManager = OfflineMessageManager(Config.conn1)
         val map = offlineMessageManager.messages.groupBy { it.from }
@@ -96,6 +100,7 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
         adapter = RosterAdapter(rosterLists, map)
         adapterGroup = GroupAdapter(groupList)
         imgAddPerson.setOnClickListener {
+
             val dialog = Dialog(this)
             dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
             val main = LinearLayout(this)
@@ -190,6 +195,7 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
             multiUserChat.join(mucEnterConfiguration)
         }
         multiUserChat.changeNickname(Resourcepart.from(groupName))
+
     }
 
 
@@ -226,6 +232,7 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
 
         val intent = Intent(this, GroupDetailActivity::class.java)
         intent.putExtra("group", entry.roomId.asUnescapedString())
+
         startActivity(intent)
     }
 
@@ -236,6 +243,7 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
     )
     fun getBuddies() {
         groupList.clear()
+
         rosterLists.clear()
         if (!Config.roster!!.isLoaded) {
             Config.roster?.reloadAndWait()
@@ -264,6 +272,7 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
             groupList.add(GroupInfo(entry, room))
 
         }
+
 
     }
 }

@@ -13,34 +13,29 @@ import com.esafirm.imagepicker.features.ImagePicker
 import com.esafirm.imagepicker.features.ReturnMode
 import com.esafirm.imagepicker.model.Image
 import kotlinx.android.synthetic.main.activity_chat.*
+
+import okhttp3.*
+import org.jitsi.meet.sdk.JitsiMeet
+import org.jitsi.meet.sdk.JitsiMeetActivity
+import org.jitsi.meet.sdk.JitsiMeetConferenceOptions
+import org.jitsi.meet.sdk.JitsiMeetUserInfo
+import org.jivesoftware.smack.SmackException
+import org.jivesoftware.smack.XMPPException
 import org.jivesoftware.smack.chat.ChatManagerListener
+import org.jivesoftware.smack.chat2.Chat
+import org.jivesoftware.smack.chat2.ChatManager
 import org.jivesoftware.smack.packet.Message
+import org.jivesoftware.smack.packet.StandardExtensionElement
+import org.jivesoftware.smackx.httpfileupload.HttpFileUploadManager
 import org.jivesoftware.smackx.iqlast.LastActivityManager
 import org.jivesoftware.smackx.offline.OfflineMessageManager
 import org.jivesoftware.smackx.offline.packet.OfflineMessageInfo
-import java.text.SimpleDateFormat
-import java.util.*
-import kotlin.collections.ArrayList
-import org.jivesoftware.smack.SmackException
-import org.jivesoftware.smack.XMPPException
-import android.R.attr.path
-import androidx.core.app.ComponentActivity.ExtraData
-import androidx.core.content.ContextCompat.getSystemService
-import android.icu.lang.UCharacter.GraphemeClusterBreak.T
-import okhttp3.*
-import org.jivesoftware.smack.chat2.Chat
-import org.jivesoftware.smack.chat2.ChatManager
-import org.jivesoftware.smack.packet.DefaultExtensionElement
-import org.jivesoftware.smack.packet.StandardExtensionElement
-import org.jivesoftware.smackx.httpfileupload.HttpFileUploadManager
 import org.jxmpp.jid.impl.JidCreate
-//import org.jivesoftware.smackx.httpfileupload.HttpFileUploadManager
+import timber.log.Timber
 import java.io.File
 import java.io.IOException
-import java.util.concurrent.TimeUnit
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
+import java.net.MalformedURLException
+import java.net.URL
 
 
 class ChatActivity : AppCompatActivity() {
@@ -52,6 +47,7 @@ class ChatActivity : AppCompatActivity() {
     var offlineMessage = listOf<Message>()
     val listener =
         ChatManagerListener { chat, createdLocally ->
+
             chat.addMessageListener { chat, message ->
                 if (message != null) {
                     Log.e("Message Received : ", message.body)
@@ -82,13 +78,14 @@ class ChatActivity : AppCompatActivity() {
         Log.e("CURRENT ", "USER" + Config.conn1!!.user)
         getBundleData()
 
-
         chatManager = ChatManager.getInstanceFor(Config.conn1)
         adapter = ChatAdapter(messages, Config.conn1!!.user.asEntityBareJid())
         rvMessage.adapter = adapter
         currentChat =
             chatManager.chatWith(JidCreate.entityBareFrom(sendTo) /*+ "/" + Config.openfire_host_server_RESOURCE*/)
 
+
+        initMeetingConfig()
         setAction()
         setMsgListener()
         val lManager = LastActivityManager.getInstanceFor(Config.conn1)
@@ -105,32 +102,40 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun getAgo(second: Long): String {
-        var convTime = ""
-        var suffix = "ago"
-        if (second < 60) {
-            convTime = "$second Seconds $suffix"
-        } else if (second < 60 * 60) {
-            convTime = "" + second / 60 + " Minutes " + suffix
-        } else if (second < 60 * 60 * 24) {
-            convTime = "" + second / (60 * 60) + " Hours " + suffix;
-        } /*else if (day >= 7) {
-            if (day > 360) {
-                convTime = (day / 30) + " Years " + suffix;
-            } else if (day > 30) {
-                convTime = (day / 360) + " Months " + suffix;
-            } else {
-                convTime = (day / 7) + " Week " + suffix;
+
+        val convTime: String
+        val suffix = "ago"
+        when {
+            second < 60 -> {
+                convTime = "$second Seconds $suffix"
             }
-        }*/ else if (second < 60 * 60 * 24 * 7) {
-            convTime = "" + second / (60 * 60 * 24) + " Days " + suffix;
-        } else {
-            convTime = "long time ago"
+            second < 60 * 60 -> {
+                convTime = "" + second / 60 + " Minutes " + suffix
+            }
+            second < 60 * 60 * 24 -> {
+                convTime = "" + second / (60 * 60) + " Hours " + suffix;
+            } /*else if (day >= 7) {
+                if (day > 360) {
+                    convTime = (day / 30) + " Years " + suffix;
+                } else if (day > 30) {
+                    convTime = (day / 360) + " Months " + suffix;
+                } else {
+                    convTime = (day / 7) + " Week " + suffix;
+                }
+            }*/
+            second < 60 * 60 * 24 * 7 -> {
+                convTime = "" + second / (60 * 60 * 24) + " Days " + suffix;
+            }
+            else -> {
+                convTime = "long time ago"
+            }
         }
         return convTime
     }
 
     private fun getBundleData() {
-        sendTo = intent.getStringExtra("user")
+
+        sendTo = intent.getStringExtra("user")!!
 
         /* val listType = object : TypeToken<List<Message>>() {}.type;
          if (intent.hasExtra("offline")) {
@@ -184,6 +189,24 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
+
+    private fun initMeetingConfig() {
+        // Initialize default options for Jitsi Meet conferences.
+        // Initialize default options for Jitsi Meet conferences.
+        val serverURL = try {
+            URL("https://openfire.brainvire.dev:7443/ofmeet/")
+            /*serverURL = new URL("https://meet.jit.si/");*/
+        } catch (e: MalformedURLException) {
+            e.printStackTrace()
+            throw RuntimeException("Invalid server URL!")
+        }
+        val defaultOptions = JitsiMeetConferenceOptions.Builder()
+            .setServerURL(serverURL)
+            .setWelcomePageEnabled(false)
+            .build()
+        JitsiMeet.setDefaultConferenceOptions(defaultOptions)
+    }
+
     private fun setAction() {
         ivSend.setOnClickListener {
             if (etMsg.text.isNullOrBlank()) {
@@ -208,6 +231,7 @@ class ChatActivity : AppCompatActivity() {
         etMsg.addTextChangedListener {
             ivSend.isEnabled == !it.isNullOrBlank()
         }
+
         ivAttachment.setOnClickListener {
             ImagePicker.create(this)
                 .returnMode(ReturnMode.ALL) // set whether pick and / or camera action should return immediate result or not.
@@ -220,6 +244,35 @@ class ChatActivity : AppCompatActivity() {
                 .showCamera(true) // show camera or not (true by default)
                 .imageDirectory("Camera") // directory name for captured image  ("Camera" folder by default)
                 .start()
+        }
+
+
+        btnCall.setOnClickListener {
+            val opponent = sendTo.substring(0, sendTo.indexOf("@"))
+            val text = Config.loginName.plus("_${opponent}")
+            Log.v("@@@ROOM ID:::", text)
+
+            // Build options object for joining the conference. The SDK will merge the default
+            // one we set earlier and this one when joining.
+            // Build options object for joining the conference. The SDK will merge the default
+            // one we set earlier and this one when joining.
+
+            val userInfo = JitsiMeetUserInfo()
+            userInfo.displayName = "Akash Moradiya"
+            userInfo.avatar = URL("https://static2.clutch.co/s3fs-public/logos/brainvire_png_logo_-_copy.png")
+            val options = JitsiMeetConferenceOptions.Builder()
+                .setRoom(text)
+                .setUserInfo(userInfo)
+                .setFeatureFlag("pip.enabled",false)
+                .setFeatureFlag("chat.enabled", false)
+                .setWelcomePageEnabled(false)
+                .build()
+
+            // Launch the new activity with the given options. The launch() method takes care
+            // of creating the required Intent and passing the options.
+            // Launch the new activity with the given options. The launch() method takes care
+            // of creating the required Intent and passing the options.
+            JitsiMeetActivity.launch(this, options)
         }
     }
 
@@ -235,11 +288,10 @@ class ChatActivity : AppCompatActivity() {
     private fun sendImage(image: Image) {
         val file = File(image.path)
         val manager = HttpFileUploadManager.getInstanceFor(Config.conn1)
-//        manager.setTlsContext(SSLContext.getDefault())
+
         try {
             val slot = manager.requestSlot(file.name, file.length())
             val client = UnsafeOkHttpClient.getUnsafeOkHttpClient()
-
             val request = Request.Builder()
                 .url(slot.putUrl)
                 .put(RequestBody.create(MediaType.parse("application/octet-stream"), file))
@@ -253,7 +305,8 @@ class ChatActivity : AppCompatActivity() {
 
                 override fun onResponse(call: Call, response: Response) {
                     val msg = Message()
-                    msg.type = Message.Type.chat;
+
+                    msg.type = Message.Type.chat
                     msg.body = slot.putUrl.toURI().toASCIIString()
                     msg.from = Config.conn1?.user
                     msg.to = currentChat.xmppAddressOfChatPartner
@@ -272,53 +325,10 @@ class ChatActivity : AppCompatActivity() {
         } catch (e: SmackException) {
             e.printStackTrace()
         }
-/*
-        val msg = Message()
-        msg.type = Message.Type.chat
-//        msg.body = etMsg.text.toString()
-        msg.from = Config.conn1?.user
-        msg.to = currentChat.xmppAddressOfChatPartner
 
-
-        val extAudiourl = DefaultExtensionElement(
-            "imageurl", "urn:xmpp:imageurl"
-        )
-        val fileUrl = "https://placeimg.com/640/480/nature"
-        extAudiourl.setValue("imageurl", fileUrl)
-//        msg.body = "[IMAGE]"
-        val extPhotoThumb = DefaultExtensionElement(
-            "PhotoThumb", "urn:xmpp:photothumb"
-        )
-        extPhotoThumb.setValue("PhotoThumb", fileUrl)
-        val extFileName = DefaultExtensionElement(
-            "FileName", "urn:xmpp:extfilename"
-        )
-        extFileName.setValue("FileName", "DEMO")
-        val extTypeOfChat = DefaultExtensionElement(
-            "typeofchat", "urn:xmpp:exttypeofchat"
-        )
-        extTypeOfChat.setValue("typeofchat", ChatType.IMAGE.type)
-        val c = Calendar.getInstance()
-
-        val df = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        val chatTime = df.format(c.time)
-
-        val extchatTime = DefaultExtensionElement(
-            "chatTime", "urn:xmpp:extchatTime"
-        )
-        extchatTime.setValue("chatTime", chatTime + "")
-
-        msg.addExtension(extchatTime)
-        msg.addExtension(extAudiourl)
-        msg.addExtension(extPhotoThumb)
-        msg.addExtension(extTypeOfChat)
-        msg.addExtension(extFileName)
-
-        sendMessage(msg)*/
     }
 
     private fun sendMessage(msgBody: Message) {
-
         val chatThread = @SuppressLint("StaticFieldLeak")
         object : AsyncTask<Void, Void, Unit>() {
             override fun doInBackground(vararg params: Void?): Unit? {
@@ -336,10 +346,4 @@ class ChatActivity : AppCompatActivity() {
         chatThread.execute()
 
     }
-
-    override fun onDestroy() {
-        super.onDestroy()
-//        chatManager.removeChatListener(listener)
-    }
-
 }
