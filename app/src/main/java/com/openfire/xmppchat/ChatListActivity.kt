@@ -29,12 +29,18 @@ import org.jxmpp.jid.parts.Localpart
 import org.jxmpp.jid.parts.Resourcepart
 
 
-class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener {
+class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener,
+    GroupAdapter.GroupClickListener {
 
     var rosterLists: ArrayList<RosterEntry> = ArrayList()
+    var groupList: ArrayList<GroupInfo> = ArrayList()
+
     lateinit var adapter: RosterAdapter
+    lateinit var adapterGroup: GroupAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Config.multiUserChatManager = MultiUserChatManager.getInstanceFor(Config.conn1)
         Config.roster = Roster.getInstanceFor(Config.conn1)
         Config.roster!!.subscriptionMode = Roster.SubscriptionMode.accept_all
         Config.conn1!!.addStanzaInterceptor(object : StanzaListener {
@@ -71,12 +77,24 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
             }
 
         })
+        Config.multiUserChatManager!!.addInvitationListener { conn, room, inviter, reason, password, message, invitation ->
+            if (room.isJoined) {
+                val mucEnterConfiguration =
+                    room.getEnterConfigurationBuilder(Resourcepart.from(Config.loginName))
+                        .requestNoHistory()
+                        .build()
+
+                room.join(mucEnterConfiguration)
+            }
+        }
+
         setContentView(R.layout.activity_chat_list)
         val offlineMessageManager = OfflineMessageManager(Config.conn1)
         val map = offlineMessageManager.messages.groupBy { it.from }
         val presence = Presence(Presence.Type.available)
         Config.conn1!!.sendStanza(presence)
         adapter = RosterAdapter(rosterLists, map)
+        adapterGroup = GroupAdapter(groupList)
         imgAddPerson.setOnClickListener {
             val dialog = Dialog(this)
             dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -110,31 +128,68 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
         }
 
         imgAddGroup.setOnClickListener {
-            if (!Config.roster!!.isLoaded) {
-                Config.roster?.reloadAndWait()
-                Log.e("Roster :", "Reload and wait")
-            }
 
-            val mucJid = JidCreate.entityBareFrom(
-                Localpart.from("TEST_MUC")
-                , Domainpart.from(Config.openfire_host_server_CONFERENCE_SERVICE)
+            val dialog = Dialog(this)
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+            val main = LinearLayout(this)
+            main.orientation = LinearLayout.VERTICAL
+            val editText = EditText(this)
+            val editParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            val multiUserChatManager = MultiUserChatManager.getInstanceFor(Config.conn1)
+            editParams.topMargin = 40
+            editText.layoutParams = editParams
+            val btn = Button(this)
+            btn.text = "Create Group"
+            val btnParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            btnParams.topMargin = 40
+            btnParams.bottomMargin = 40
 
-            val multiUserChat = multiUserChatManager.getMultiUserChat(mucJid)
-            val mucEnterConfiguration =
-                multiUserChat?.getEnterConfigurationBuilder(Resourcepart.from(Config.loginName))!!
-                    .requestNoHistory()
-                    .build()
-
-            if (!multiUserChat.isJoined) {
-                multiUserChat.join(mucEnterConfiguration)
+            main.addView(editText)
+            main.addView(btn)
+            btn.setOnClickListener {
+                dialog.dismiss()
+                if (editText.text.isNotEmpty())
+                    createNewGroup(editText.text.toString())
             }
+            dialog.setContentView(main)
+            dialog.show()
+
 
         }
         adapter.setRoasterListener(this)
         rvRoasterList.adapter = adapter
+        adapterGroup.setGroupListener(this)
+        rvRoasterGroup.adapter = adapterGroup
+    }
 
+    private fun createNewGroup(groupName: String) {
+
+        if (!Config.roster!!.isLoaded) {
+            Config.roster?.reloadAndWait()
+            Log.e("Roster :", "Reload and wait")
+        }
+        groupName.replace(" ", "_")
+        groupName.plus(System.currentTimeMillis() / 1000)
+        val mucJid = JidCreate.entityBareFrom(
+            Localpart.from(groupName)
+            , Domainpart.from(Config.openfire_host_server_CONFERENCE_SERVICE)
+        )
+
+        val multiUserChat = Config.multiUserChatManager!!.getMultiUserChat(mucJid)
+        val mucEnterConfiguration =
+            multiUserChat.getEnterConfigurationBuilder(Resourcepart.from(Config.loginName))
+                .requestNoHistory()
+                .build()
+
+        if (!multiUserChat.isJoined) {
+            multiUserChat.join(mucEnterConfiguration)
+        }
+        multiUserChat.changeNickname(Resourcepart.from(groupName))
     }
 
 
@@ -167,12 +222,20 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
         startActivity(intent)
     }
 
+    override fun onGroupClick(entry: GroupInfo) {
+
+        val intent = Intent(this, GroupDetailActivity::class.java)
+        intent.putExtra("group", entry.roomId.asUnescapedString())
+        startActivity(intent)
+    }
+
     @Throws(
         SmackException.NotLoggedInException::class,
         InterruptedException::class,
         SmackException.NotConnectedException::class
     )
-    fun getBuddies(): List<RosterEntry> {
+    fun getBuddies() {
+        groupList.clear()
         rosterLists.clear()
         if (!Config.roster!!.isLoaded) {
             Config.roster?.reloadAndWait()
@@ -196,11 +259,12 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
             adapter.notifyDataSetChanged()
         }
 
+        for (entry in Config.multiUserChatManager!!.joinedRooms) {
+            val room = Config.multiUserChatManager!!.getRoomInfo(entry)
+            groupList.add(GroupInfo(entry, room))
 
-//        val presence = roster.getAllPresences(Config.loginName + "@" + Config.openfire_host_server_SERVICE)
-//
-//        adapter.setPresence(presence)
-        return rosterLists
+        }
+
     }
 }
 

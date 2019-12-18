@@ -22,15 +22,13 @@
         android:maxLines="2" />
 
     <TextView
-        android:id="@+id/tvCount"
+        android:id="@+id/tvRole"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:layout_marginStart="5dp"
         android:layout_marginEnd="5dp"
-        android:background="@drawable/msg_count_bg"
         android:gravity="center"
-        android:textColor="@color/ef_white"
-        android:textSize="10sp"
-        android:visibility="gone" />
+        android:textColor="@color/ef_teal"
+        android:textSize="10sp"/>
 </LinearLayout>

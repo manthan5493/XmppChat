@@ -345,9 +345,9 @@ class MainActivity : AppCompatActivity() {
 //            .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
             .setXmppDomain(Config.openfire_host_server_SERVICE)
             .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
-//            .setSocketFactory(SocketFactory.getDefault())
+            .setSocketFactory(SocketFactory.getDefault())
             .setPort(Config.openfire_host_server_PORT)
-            .setConnectTimeout(25000)
+            .setConnectTimeout(5000)
             .enableDefaultDebugger()
             .setSendPresence(false)
 //            .setDebuggerEnabled(true) // to view what's happening in detail
@@ -357,8 +357,8 @@ class MainActivity : AppCompatActivity() {
         object : AsyncTask<Void, Void, Boolean>() {
             override fun doInBackground(vararg params: Void?): Boolean {
                 val conn1 = XMPPTCPConnection(Config.config)
-                conn1.replyTimeout = 25000
-                conn1.addConnectionListener(object : ConnectionListener {
+                conn1.replyTimeout = 5000
+              /*  conn1.addConnectionListener(object : ConnectionListener {
                     override fun connected(connection: XMPPConnection?) {
                         Log.e("CONNECTION", "connected")
                     }
@@ -382,8 +382,7 @@ class MainActivity : AppCompatActivity() {
 
                     }
 
-                })
-
+                })*/
 
 //                conn1.packetReplyTimeout =
 //                    5000 // If not connected within 5 seconds then conn1 will be disconnected
@@ -391,13 +390,13 @@ class MainActivity : AppCompatActivity() {
                     val connection = conn1.connect()
                     if (conn1.isConnected) {
                         Config.conn1 = connection
-                        val reconnect = ReconnectionManager.getInstanceFor(Config.conn1)
-                        reconnect.enableAutomaticReconnection()
+//                        val reconnect = ReconnectionManager.getInstanceFor(Config.conn1)
+//                        reconnect.enableAutomaticReconnection()
                     }
-
-                    val ping = PingManager.getInstanceFor(Config.conn1)
-                    ping.pingInterval = 60
-                    ping.pingServerIfNecessary()
+//
+//                    val ping = PingManager.getInstanceFor(Config.conn1)
+//                    ping.pingInterval = 60
+//                    ping.pingServerIfNecessary()
                 } catch (e: Exception) {
                     e.printStackTrace()
                     Log.e("app", e.toString())
