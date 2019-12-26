@@ -29,14 +29,17 @@ class Config {
         //        val openfire_host_server_PORT = 5222 //This the port of chat server
         val openfire_host_server_PORT = 5222 //This the port of chat server
         val openfire_host_server_SERVICE_DEMO =
-            "openfire.demoserver.com" //This is name of service that the server provides
+            "demo.openfire.com" //This is name of service that the server provides
         val openfire_host_server_SERVICE_DEV =
             "openfire.brainvire.dev" //This is name of service that the server provides
         val openfire_host_server_HOST = openfire_host_server_HOST_DEV
         val openfire_host_server_SERVICE = openfire_host_server_SERVICE_DEV
         val API_END_POINT = "https://openfire.brainvire.dev/"
         val CHAT_END_POINT = "openfire.brainvire.dev"
-        val openfire_host_server_CONFERENCE_SERVICE = "conference.openfire.brainvire.dev"
+        val openfire_host_server_CONFERENCE_SERVICE_DEV = "conference.openfire.brainvire.dev"
+        val openfire_host_server_CONFERENCE_SERVICE_DEMO = " conference.demo.openfire.com"
+
+        val openfire_host_server_CONFERENCE_SERVICE = openfire_host_server_CONFERENCE_SERVICE_DEV
 
     }
 }

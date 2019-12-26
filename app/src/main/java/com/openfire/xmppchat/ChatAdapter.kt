@@ -104,10 +104,7 @@ class ChatAdapter(private val data: List<Message>, private val currentUser: Bare
     }
 
     override fun getItemViewType(position: Int): Int {
-        return when (data[position].getExtension<StandardExtensionElement>(
-            "typeofchat",
-            "urn:xmpp:exttypeofchat"
-        ).text) {
+        return when (data[position].subject) {
             ChatType.CHAT.type -> {
                 ChatType.CHAT.viewType
             }

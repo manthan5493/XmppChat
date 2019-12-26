@@ -5,10 +5,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import org.jivesoftware.smackx.muc.Affiliate
 import org.jivesoftware.smackx.muc.Occupant
 
 class GroupUserAdapter(
-    private val data: List<Occupant>
+    private val data: List<Affiliate>
 ) :
     RecyclerView.Adapter<GroupUserAdapter.MyViewHolder>() {
     private var listener: GroupClickListener? = null

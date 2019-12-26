@@ -13,7 +13,6 @@ import com.esafirm.imagepicker.features.ImagePicker
 import com.esafirm.imagepicker.features.ReturnMode
 import com.esafirm.imagepicker.model.Image
 import kotlinx.android.synthetic.main.activity_chat.*
-
 import okhttp3.*
 import org.jitsi.meet.sdk.JitsiMeet
 import org.jitsi.meet.sdk.JitsiMeetActivity
@@ -25,13 +24,11 @@ import org.jivesoftware.smack.chat.ChatManagerListener
 import org.jivesoftware.smack.chat2.Chat
 import org.jivesoftware.smack.chat2.ChatManager
 import org.jivesoftware.smack.packet.Message
-import org.jivesoftware.smack.packet.StandardExtensionElement
 import org.jivesoftware.smackx.httpfileupload.HttpFileUploadManager
 import org.jivesoftware.smackx.iqlast.LastActivityManager
 import org.jivesoftware.smackx.offline.OfflineMessageManager
 import org.jivesoftware.smackx.offline.packet.OfflineMessageInfo
 import org.jxmpp.jid.impl.JidCreate
-import timber.log.Timber
 import java.io.File
 import java.io.IOException
 import java.net.MalformedURLException
@@ -164,7 +161,7 @@ class ChatActivity : AppCompatActivity() {
             chatManager.addIncomingListener { from, message, chat ->
                 if (message != null) {
                     Log.e("Message Received : ", message.body)
-                    Log.e("Message ID : ", message.stanzaId)
+//                    Log.e("Message ID : ", message.stanzaId)
                     Log.e("Message TO : ", message.to.asUnescapedString())
                     if (message.from.asBareJid()/*.split("/")[0]*/ == chat.xmppAddressOfChatPartner/*.split("/")[0]*/) {
                         runOnUiThread {
@@ -216,16 +213,17 @@ class ChatActivity : AppCompatActivity() {
             msg.type = Message.Type.chat;
             msg.body = etMsg.text.toString()
             msg.from = Config.conn1?.user
+            msg.subject=ChatType.CHAT.type
             msg.to = currentChat.xmppAddressOfChatPartner
 //            val extTypeOfChat = DefaultExtensionElement(
 //                "typeofchat", "urn:xmpp:exttypeofchat"
 //            )
-            val extTypeOfChat = StandardExtensionElement.builder(
-                "typeofchat", "urn:xmpp:exttypeofchat"
-            ).setText(ChatType.CHAT.type).build()
+//            val extTypeOfChat = StandardExtensionElement.builder(
+//                "typeofchat", "urn:xmpp:exttypeofchat"
+//            ).setText(ChatType.CHAT.type).build()
 
 //            extTypeOfChat.setValue("typeofchat", ChatType.CHAT.type)
-            msg.addExtension(extTypeOfChat)
+//            msg.addExtension(extTypeOfChat)
             sendMessage(msg)
         }
         etMsg.addTextChangedListener {
@@ -310,10 +308,11 @@ class ChatActivity : AppCompatActivity() {
                     msg.body = slot.putUrl.toURI().toASCIIString()
                     msg.from = Config.conn1?.user
                     msg.to = currentChat.xmppAddressOfChatPartner
-                    val extTypeOfChat = StandardExtensionElement.builder(
-                        "typeofchat", "urn:xmpp:exttypeofchat"
-                    ).setText(ChatType.IMAGE.type).build()
-                    msg.addExtension(extTypeOfChat)
+                    msg.subject=ChatType.IMAGE.type
+//                    val extTypeOfChat = StandardExtensionElement.builder(
+//                        "typeofchat", "urn:xmpp:exttypeofchat"
+//                    ).setText(ChatType.IMAGE.type).build()
+//                    msg.addExtension(extTypeOfChat)
                     sendMessage(msg)
                 }
             })

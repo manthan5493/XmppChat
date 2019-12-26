@@ -3,26 +3,22 @@ package com.openfire.xmppchat
 import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.Window
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-
 import kotlinx.android.synthetic.main.activity_chat_list.*
 import org.jivesoftware.smack.SmackException
-import org.jivesoftware.smack.StanzaListener
-import org.jivesoftware.smack.filter.StanzaFilter
-
+import org.jivesoftware.smack.XMPPException
 import org.jivesoftware.smack.packet.Presence
-import org.jivesoftware.smack.packet.Stanza
-import org.jivesoftware.smack.roster.Roster
 import org.jivesoftware.smack.roster.RosterEntry
 import org.jivesoftware.smack.roster.RosterListener
 import org.jivesoftware.smack.roster.packet.RosterPacket
-import org.jivesoftware.smackx.muc.MultiUserChatManager
+import org.jivesoftware.smackx.bookmarks.BookmarkManager
+import org.jivesoftware.smackx.muc.MultiUserChatException
 import org.jivesoftware.smackx.offline.OfflineMessageManager
 import org.jivesoftware.smackx.xdata.FormField
 import org.jxmpp.jid.Jid
@@ -40,29 +36,17 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
 
     lateinit var adapter: RosterAdapter
     lateinit var adapterGroup: GroupAdapter
+    lateinit var bookmarkManager: BookmarkManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Config.multiUserChatManager = MultiUserChatManager.getInstanceFor(Config.conn1)
-        Config.multiUserChatManager!!.setAutoJoinOnReconnect(true)
-        Config.roster = Roster.getInstanceFor(Config.conn1)
-        Config.roster!!.subscriptionMode = Roster.SubscriptionMode.accept_all
-        Config.conn1!!.addStanzaInterceptor(object : StanzaListener {
-            override fun processStanza(packet: Stanza?) {
-                if (packet is Presence) {
-                    Toast.makeText(
-                        this@ChatListActivity,
-                        "PRESENCES" + packet.from,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }, object : StanzaFilter {
-            override fun accept(stanza: Stanza?): Boolean {
-                return stanza is Presence
-            }
-        })
 
+        bookmarkManager = BookmarkManager.getBookmarkManager(Config.conn1)
+        /* with(bookmarkManager.bookmarkedConferences) {
+             forEach {
+                 bookmarkManager.removeBookmarkedConference(it.jid)
+             }
+         }*/
         Config.roster!!.addRosterListener(object : RosterListener {
             override fun entriesDeleted(addresses: MutableCollection<Jid>?) {
                 getBuddies()
@@ -82,22 +66,63 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
 
         })
         Config.multiUserChatManager!!.addInvitationListener { conn, room, inviter, reason, password, message, invitation ->
-            if (room.isJoined) {
-                val mucEnterConfiguration =
-                    room.getEnterConfigurationBuilder(Resourcepart.from(Config.loginName))
-                        .requestNoHistory()
-                        .build()
+            //            Toast.makeText(this, "Invitation", Toast.LENGTH_SHORT).show()
 
-                room.join(mucEnterConfiguration)
+            try {
+                /*  var nickname: Resourcepart? = null
+                  try {
+                      nickname = Resourcepart.from(Config.conn1!!.user.asUnescapedString())
+                  } catch (e: XmppStringprepException) {
+                      e.printStackTrace()
+                  }
+  */
+                try {
+                    val mucEnterConfiguration =
+                        room.getEnterConfigurationBuilder(Resourcepart.from(Config.loginName))
+                            .requestNoHistory()
+                            .build()
+
+                    room.join(mucEnterConfiguration)
+//                    room.join(nickname); //while get invitation you need to join that room
+                    /*runOnUiThread {
+                        Handler().postDelayed({
+
+                            bookmarkManager.addBookmarkedConference(
+                                room.reservedNickname,
+                                room.room,
+                                true,
+                                Resourcepart.from(Config.loginName),
+                                ""
+                            )
+                        }, 2000)
+                    }*/
+
+                } catch (e: SmackException.NoResponseException) {
+                    e.printStackTrace()
+                } catch (e: SmackException.NotConnectedException) {
+                    e.printStackTrace()
+                } catch (e: InterruptedException) {
+                    e.printStackTrace()
+                } catch (e: MultiUserChatException.NotAMucServiceException) {
+                    e.printStackTrace()
+                }
+
+                Log.e("MUC", "join room successfully");
+                getBuddies()
+
+            } catch (e: XMPPException) {
+                e.printStackTrace();
+                Log.e("MUC", "join room failed!")
             }
         }
-
-
+        Config.conn1!!.setParsingExceptionCallback { stanzaData ->
+            Log.e("MUC", "Parcing" + stanzaData.content)
+            stanzaData.parsingException.printStackTrace()
+        }
         setContentView(R.layout.activity_chat_list)
         val offlineMessageManager = OfflineMessageManager(Config.conn1)
         val map = offlineMessageManager.messages.groupBy { it.from }
-        val presence = Presence(Presence.Type.available)
-        Config.conn1!!.sendStanza(presence)
+
         adapter = RosterAdapter(rosterLists, map)
         adapterGroup = GroupAdapter(groupList)
         imgAddPerson.setOnClickListener {
@@ -171,6 +196,10 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
         rvRoasterList.adapter = adapter
         adapterGroup.setGroupListener(this)
         rvRoasterGroup.adapter = adapterGroup
+        getBuddies()
+        val presence = Presence(Presence.Type.available)
+        Config.conn1!!.sendStanza(presence)
+        (application as ChatApp).startPresenceUpdate = true
     }
 
     private fun createNewGroup(groupName: String) {
@@ -193,6 +222,27 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
                 .build()
 
         multiUserChat.join(mucEnterConfiguration)
+
+        bookmarkManager.addBookmarkedConference(
+            groupName,
+            mucJid,
+            true,
+            Resourcepart.from(Config.loginName),
+            ""
+        )
+
+//        try {
+//            multiUserChat.sendMessage(Config.loginName + " : You have joined the group : " + groupName);
+//
+//            val presence =
+//                multiUserChat.getOccupantPresence(JidCreate.entityFullFrom(groupName + "@" + Config.openfire_host_server_CONFERENCE_SERVICE + "/" + Config.loginName))
+//            presence.mode = Presence.Mode.available
+//            Config.conn1!!.sendStanza(presence)
+//
+//        } catch (e: java.lang.Exception) {
+//            e.printStackTrace();
+//        }
+//        multiUserChat.grantOwnership(Config.conn1!!.user)
         multiUserChat.grantOwnership(Config.conn1!!.user)
 
 //        multiUserChat.changeNickname(Resourcepart.from(groupName))
@@ -213,16 +263,32 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
         submitForm.setAnswer("x-muc#roomconfig_canchangenick", true)
         submitForm.setAnswer("x-muc#roomconfig_registration", true)
         submitForm.getField("muc#roomconfig_persistentroom").addValue("1")
+        submitForm.getField("muc#roomconfig_membersonly").addValue("1")
+
+
         multiUserChat.sendConfigurationForm(submitForm)
+        for (entry in Config.roster!!.entries) {
+            val userJID = JidCreate.entityBareFrom(entry.jid)
+            try {
+//                multiUserChat.changeAvailabilityStatus()
+                multiUserChat.invite(userJID, "Welcome")
+//                multiUserChat.outcasts.
+                multiUserChat.grantMembership(userJID)
+//                multiUserChat.grantModerator(Resourcepart.from(userJID.localpart.asUnescapedString()))
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
         getBuddies()
     }
 
-
-    override fun onResume() {
-        super.onResume()
-        getBuddies()
-    }
-
+    /* override fun onResume() {
+         super.onResume()
+         getBuddies()
+     }
+ */
     private fun openNewChat(newUser: String) {
 
 
@@ -282,14 +348,27 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
                 }
             }
         }
-        runOnUiThread {
-            adapter.notifyDataSetChanged()
-        }
 
         for (entry in Config.multiUserChatManager!!.joinedRooms) {
             val room = Config.multiUserChatManager!!.getRoomInfo(entry)
             groupList.add(GroupInfo(entry, room))
 
+            val bookMarked = bookmarkManager.bookmarkedConferences.firstOrNull { it.jid == entry }
+            if (bookMarked == null) {
+                bookmarkManager.addBookmarkedConference(
+                    room.name,
+                    room.room,
+                    true,
+                    Resourcepart.from(Config.loginName),
+                    ""
+                )
+            }
+
+        }
+
+        runOnUiThread {
+            adapter.notifyDataSetChanged()
+//            adapterGroup.notifyDataSetChanged()
         }
 
     }
