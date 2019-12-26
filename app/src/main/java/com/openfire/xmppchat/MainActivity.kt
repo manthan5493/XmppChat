@@ -58,6 +58,7 @@ class MainActivity : AppCompatActivity() {
         btnLogin.setOnClickListener {
             if (etUser.text.toString().isNotEmpty() && etPassword.text.toString().isNotEmpty())
                 login(etUser.text.toString(), etPassword.text.toString())
+//            Socket[address=openfire.brainvire.dev/192.168.10.86,port=5222,localPort=47750]
         }
         btnRegister.setOnClickListener {
             if (etUser.text.toString().isNotEmpty() && etPassword.text.toString().isNotEmpty())
@@ -307,8 +308,6 @@ class MainActivity : AppCompatActivity() {
                 try {
 
                     Config.conn1!!.login(userName, password)
-                    ServerPingWithAlarmManager.getInstanceFor(Config.conn1!!).isEnabled = true;
-
 
                     if (Config.conn1!!.isAuthenticated) {
                         Log.e("app", "Auth done")

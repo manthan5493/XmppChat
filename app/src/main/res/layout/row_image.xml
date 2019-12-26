@@ -8,19 +8,36 @@
     android:orientation="horizontal"
     android:weightSum="10">
 
+    <TextView
+        android:id="@+id/tvName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginBottom="5dp"
+        android:gravity="end"
+        android:maxLines="2"
+        android:paddingEnd="8dp"
+        android:text="@string/app_name"
+        android:textColor="@color/colorPrimary"
+        app:layout_constrainedWidth="true"
+        app:layout_constraintBottom_toTopOf="@+id/ivImage"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.65" />
+
     <ImageView
         android:id="@+id/ivImage"
-        android:padding="8dp"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintDimensionRatio="1:1"
         android:layout_gravity="center_vertical"
-        app:layout_constraintWidth_percent="0.65"
-        android:maxLines="2"
-        app:layout_constraintEnd_toEndOf="parent"
         android:gravity="end"
+        android:maxLines="2"
+        android:padding="8dp"
         android:text="@string/app_name"
         android:textColor="@color/ef_white"
         app:layout_constrainedWidth="true"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvName"
+        app:layout_constraintWidth_percent="0.65" />
 </androidx.constraintlayout.widget.ConstraintLayout>

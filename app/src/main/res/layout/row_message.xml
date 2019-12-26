@@ -9,18 +9,34 @@
     android:weightSum="10">
 
     <TextView
-        android:id="@+id/tvMessage"
-        android:background="#909090"
+        android:id="@+id/tvName"
         android:layout_width="0dp"
-        android:padding="8dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
-        app:layout_constraintWidth_percent="0.65"
-        android:maxLines="2"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="5dp"
         android:gravity="end"
+        android:maxLines="2"
+        android:paddingEnd="8dp"
+        android:text="@string/app_name"
+        android:textColor="@color/colorPrimary"
+        app:layout_constrainedWidth="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.65" />
+
+    <TextView
+        android:id="@+id/tvMessage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:background="#909090"
+        android:gravity="end"
+        android:maxLines="2"
+        android:padding="8dp"
         android:text="@string/app_name"
         android:textColor="@color/ef_white"
         app:layout_constrainedWidth="true"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvName"
+        app:layout_constraintWidth_percent="0.65" />
 </androidx.constraintlayout.widget.ConstraintLayout>

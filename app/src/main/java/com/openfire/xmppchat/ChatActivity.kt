@@ -65,7 +65,7 @@ class ChatActivity : AppCompatActivity() {
                         }
                     }
                 }
-                Log.w("app", chat.toString())
+//                Log.w("app", chat.toString())
             }
         }
 

@@ -40,6 +40,9 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+//        ServerPingWithAlarmManager.onCreate(this@ChatListActivity)
+//        ServerPingWithAlarmManager.getInstanceFor(Config.conn1!!).isEnabled = true;
+
 
         bookmarkManager = BookmarkManager.getBookmarkManager(Config.conn1)
         /* with(bookmarkManager.bookmarkedConferences) {
@@ -315,7 +318,7 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
 
     override fun onGroupClick(entry: GroupInfo) {
 
-        val intent = Intent(this, GroupDetailActivity::class.java)
+        val intent = Intent(this, GroupChatActivity::class.java)
         intent.putExtra("group", entry.roomId.asUnescapedString())
 
         startActivity(intent)
@@ -372,6 +375,16 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
         }
 
     }
+
+    /* List Room in Directory - TRUE
+     Make Room Moderated - FALSE
+     Make Room Members-only - TRUE
+     Allow Occupants to invite Others - TRUE
+     Allow Occupants to change Subject - FALSE
+     Only login with registered nickname - FALSE
+     Allow Occupants to change nicknames - TRUE
+     Allow Users to register with the room - TRUE
+     Log Room Conversations - TRUE*/
 }
 
 
