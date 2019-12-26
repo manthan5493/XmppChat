@@ -65,7 +65,7 @@ class GroupChatActivity : AppCompatActivity() {
 
     private fun setAction() {
         btnDetail.setOnClickListener {
-            val intent = Intent(this, GroupChatActivity::class.java)
+            val intent = Intent(this, GroupDetailActivity::class.java)
             intent.putExtra("group", mucChat.room.asUnescapedString())
             startActivity(intent)
         }

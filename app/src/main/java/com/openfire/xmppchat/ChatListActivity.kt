@@ -317,10 +317,15 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
     }
 
     override fun onGroupClick(entry: GroupInfo) {
+/*
 
         val intent = Intent(this, GroupChatActivity::class.java)
         intent.putExtra("group", entry.roomId.asUnescapedString())
+        startActivity(intent)
+*/
 
+        val intent = Intent(this, GroupDetailActivity::class.java)
+        intent.putExtra("group", entry.roomId.asUnescapedString())
         startActivity(intent)
     }
 
