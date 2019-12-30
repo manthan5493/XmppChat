@@ -270,7 +270,7 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
 
 
         multiUserChat.sendConfigurationForm(submitForm)
-        for (entry in Config.roster!!.entries) {
+    /*    for (entry in Config.roster!!.entries) {
             val userJID = JidCreate.entityBareFrom(entry.jid)
             try {
 //                multiUserChat.changeAvailabilityStatus()
@@ -282,7 +282,7 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
+        }*/
 
         getBuddies()
     }
@@ -317,16 +317,14 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
     }
 
     override fun onGroupClick(entry: GroupInfo) {
-/*
 
         val intent = Intent(this, GroupChatActivity::class.java)
         intent.putExtra("group", entry.roomId.asUnescapedString())
         startActivity(intent)
-*/
-
+/*
         val intent = Intent(this, GroupDetailActivity::class.java)
         intent.putExtra("group", entry.roomId.asUnescapedString())
-        startActivity(intent)
+        startActivity(intent)*/
     }
 
     @Throws(
@@ -342,7 +340,10 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
             Config.roster?.reloadAndWait()
             Log.e("Roster :", "Reload and wait")
         }
+
         val entries = Config.roster?.entries
+        val  rosterLists= arrayListOf<RosterEntry>()
+
         Log.e("Size of Roster :", "" + entries?.size)
         if (entries != null) {
             for (entry in entries) {
@@ -356,10 +357,10 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
                 }
             }
         }
-
+        val listGroup = arrayListOf<GroupInfo>()
         for (entry in Config.multiUserChatManager!!.joinedRooms) {
             val room = Config.multiUserChatManager!!.getRoomInfo(entry)
-            groupList.add(GroupInfo(entry, room))
+            listGroup.add(GroupInfo(entry, room))
 
             val bookMarked = bookmarkManager.bookmarkedConferences.firstOrNull { it.jid == entry }
             if (bookMarked == null) {
@@ -373,8 +374,18 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
             }
 
         }
+        adapterGroup = GroupAdapter(listGroup)
+        adapterGroup.setGroupListener(this)
+
+        val offlineMessageManager = OfflineMessageManager(Config.conn1)
+        val map = offlineMessageManager.messages.groupBy { it.from }
+
+        adapter = RosterAdapter(rosterLists, map)
+        adapter.setRoasterListener(this)
 
         runOnUiThread {
+            rvRoasterGroup.adapter = adapterGroup
+            rvRoasterList.adapter = adapter
             adapter.notifyDataSetChanged()
 //            adapterGroup.notifyDataSetChanged()
         }

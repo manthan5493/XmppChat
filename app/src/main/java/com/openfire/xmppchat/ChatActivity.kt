@@ -163,6 +163,10 @@ class ChatActivity : AppCompatActivity() {
                     Log.e("Message Received : ", message.body)
 //                    Log.e("Message ID : ", message.stanzaId)
                     Log.e("Message TO : ", message.to.asUnescapedString())
+                    if (message.subject == ChatType.CALL.type) {
+                        incomingCall(message.body)
+                        return@addIncomingListener
+                    }
                     if (message.from.asBareJid()/*.split("/")[0]*/ == chat.xmppAddressOfChatPartner/*.split("/")[0]*/) {
                         runOnUiThread {
                             Toast.makeText(this, "MSG::" + message.body, Toast.LENGTH_SHORT)
@@ -186,6 +190,24 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
+    private fun incomingCall(callRoom: String) {
+        val userInfo = JitsiMeetUserInfo()
+        userInfo.displayName = Config.loginName
+//            userInfo.avatar = URL("https://static2.clutch.co/s3fs-public/logos/brainvire_png_logo_-_copy.png")
+        val options = JitsiMeetConferenceOptions.Builder()
+            .setRoom(callRoom)
+            .setUserInfo(userInfo)
+            .setFeatureFlag("pip.enabled", false)
+            .setFeatureFlag("chat.enabled", false)
+            .setWelcomePageEnabled(false)
+            .build()
+        // Launch the new activity with the given options. The launch() method takes care
+        // of creating the required Intent and passing the options.
+        // Launch the new activity with the given options. The launch() method takes care
+        // of creating the required Intent and passing the options.
+        JitsiMeetActivity.launch(this, options)
+    }
+
 
     private fun initMeetingConfig() {
         // Initialize default options for Jitsi Meet conferences.
@@ -202,6 +224,7 @@ class ChatActivity : AppCompatActivity() {
             .setWelcomePageEnabled(false)
             .build()
         JitsiMeet.setDefaultConferenceOptions(defaultOptions)
+
     }
 
     private fun setAction() {
@@ -213,7 +236,7 @@ class ChatActivity : AppCompatActivity() {
             msg.type = Message.Type.chat;
             msg.body = etMsg.text.toString()
             msg.from = Config.conn1?.user
-            msg.subject=ChatType.CHAT.type
+            msg.subject = ChatType.CHAT.type
             msg.to = currentChat.xmppAddressOfChatPartner
 //            val extTypeOfChat = DefaultExtensionElement(
 //                "typeofchat", "urn:xmpp:exttypeofchat"
@@ -256,21 +279,29 @@ class ChatActivity : AppCompatActivity() {
             // one we set earlier and this one when joining.
 
             val userInfo = JitsiMeetUserInfo()
-            userInfo.displayName = "Akash Moradiya"
-            userInfo.avatar = URL("https://static2.clutch.co/s3fs-public/logos/brainvire_png_logo_-_copy.png")
+            userInfo.displayName = Config.loginName
+//            userInfo.avatar = URL("https://static2.clutch.co/s3fs-public/logos/brainvire_png_logo_-_copy.png")
             val options = JitsiMeetConferenceOptions.Builder()
                 .setRoom(text)
                 .setUserInfo(userInfo)
-                .setFeatureFlag("pip.enabled",false)
+                .setFeatureFlag("pip.enabled", false)
                 .setFeatureFlag("chat.enabled", false)
                 .setWelcomePageEnabled(false)
                 .build()
-
             // Launch the new activity with the given options. The launch() method takes care
             // of creating the required Intent and passing the options.
             // Launch the new activity with the given options. The launch() method takes care
             // of creating the required Intent and passing the options.
             JitsiMeetActivity.launch(this, options)
+
+            val msg = Message()
+            msg.type = Message.Type.chat;
+            msg.body = text
+            msg.from = Config.conn1?.user
+            msg.subject = ChatType.CALL.type
+            msg.to = currentChat.xmppAddressOfChatPartner
+
+            sendMessage(msg)
         }
     }
 
@@ -308,7 +339,7 @@ class ChatActivity : AppCompatActivity() {
                     msg.body = slot.putUrl.toURI().toASCIIString()
                     msg.from = Config.conn1?.user
                     msg.to = currentChat.xmppAddressOfChatPartner
-                    msg.subject=ChatType.IMAGE.type
+                    msg.subject = ChatType.IMAGE.type
 //                    val extTypeOfChat = StandardExtensionElement.builder(
 //                        "typeofchat", "urn:xmpp:exttypeofchat"
 //                    ).setText(ChatType.IMAGE.type).build()
@@ -336,10 +367,12 @@ class ChatActivity : AppCompatActivity() {
 
             override fun onPostExecute(result: Unit?) {
                 super.onPostExecute(result)
-                messages.add(msgBody)
-                adapter.notifyItemInserted(messages.size)
-                rvMessage.scrollToPosition(messages.size - 1)
-                etMsg.setText("")
+                if (msgBody.subject != ChatType.CALL.type) {
+                    messages.add(msgBody)
+                    adapter.notifyItemInserted(messages.size)
+                    rvMessage.scrollToPosition(messages.size - 1)
+                    etMsg.setText("")
+                }
             }
         }
         chatThread.execute()

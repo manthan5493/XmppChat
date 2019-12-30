@@ -5,5 +5,6 @@ enum class ChatType(val type: String, val viewType: Int) {
     IMAGE("image", 2),
     AUDIO("audio", 3),
     VIDEO("video", 4),
-    FILE("file", 5)
+    FILE("file", 5),
+    CALL("CALL", 6)
 }

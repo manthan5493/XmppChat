@@ -7,6 +7,10 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
 import org.jivesoftware.smack.packet.Presence
+import org.jivesoftware.smackx.bookmarks.BookmarkManager
+import org.jivesoftware.smackx.muc.bookmarkautojoin.MucBookmarkAutojoinManager
+import org.jxmpp.jid.impl.JidCreate
+import org.jxmpp.jid.parts.Resourcepart
 
 
 class ChatApp : Application(), LifecycleObserver {
@@ -15,26 +19,43 @@ class ChatApp : Application(), LifecycleObserver {
 
     override fun onCreate() {
         super.onCreate()
-        ProcessLifecycleOwner.get().lifecycle.addObserver(this)
+//        ProcessLifecycleOwner.get().lifecycle.addObserver(this)
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    fun onAppBackgrounded() {
-        if (startPresenceUpdate) {
-            val presence = Presence(Presence.Type.unavailable)
-            Config.conn1!!.sendStanza(presence)
-        }
-    }
+    /*  @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+     fun onAppBackgrounded() {
+         if (startPresenceUpdate) {
+             val presence = Presence(Presence.Type.unavailable)
+             Config.conn1!!.sendStanza(presence)
+         }
+     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
-    fun onAppForegrounded() {
-        if (startPresenceUpdate) {
-            val presence = Presence(Presence.Type.available)
-            Config.conn1!!.sendStanza(presence)
+     fun onAppForegrounded() {
+         if (startPresenceUpdate) {
+             val presence = Presence(Presence.Type.available)
+             Config.conn1!!.sendStanza(presence)
+             val bookmarkManager = BookmarkManager.getBookmarkManager(Config.conn1)
+
+             for (conference in bookmarkManager.bookmarkedConferences) {
+                 val mucChat = Config.multiUserChatManager!!.getMultiUserChat(conference.jid)
+
+                 *//*    val presence =
+                        mucChat.getOccupantPresence(JidCreate.entityFullFrom(mucChat.room))
+                    presence.mode = Presence.Mode.available
+                    Config.conn1!!.sendStanza(presence)*//*
+
+                val mucEnterConfiguration =
+                    mucChat.getEnterConfigurationBuilder(Resourcepart.from(Config.loginName))
+                        .requestNoHistory()
+                        .build()
+
+                mucChat.join(mucEnterConfiguration)
+            }
         }
     }
 
-
+*/
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     fun onDestroy() {
         Toast.makeText(applicationContext, "OnDestroy", Toast.LENGTH_SHORT).show()
