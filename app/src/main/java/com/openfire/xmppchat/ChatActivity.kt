@@ -190,22 +190,29 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
-    private fun incomingCall(callRoom: String) {
-        val userInfo = JitsiMeetUserInfo()
+    private fun incomingCall(roomName: String) {
+/*        val userInfo = JitsiMeetUserInfo()
         userInfo.displayName = Config.loginName
 //            userInfo.avatar = URL("https://static2.clutch.co/s3fs-public/logos/brainvire_png_logo_-_copy.png")
         val options = JitsiMeetConferenceOptions.Builder()
             .setRoom(callRoom)
             .setUserInfo(userInfo)
-            .setFeatureFlag("pip.enabled", false)
+           *//* .setFeatureFlag("pip.enabled", false)
             .setFeatureFlag("chat.enabled", false)
+            .setAudioMuted(false)
+            .setVideoMuted(false)*//*
             .setWelcomePageEnabled(false)
             .build()
         // Launch the new activity with the given options. The launch() method takes care
         // of creating the required Intent and passing the options.
         // Launch the new activity with the given options. The launch() method takes care
         // of creating the required Intent and passing the options.
-        JitsiMeetActivity.launch(this, options)
+        JitsiMeetActivity.launch(this, options)*/
+
+        val videoCallActivity = Intent(this, VideoCallActivity::class.java)
+        videoCallActivity.putExtra("room_name", roomName)
+        startActivity(videoCallActivity)
+
     }
 
 
@@ -221,6 +228,8 @@ class ChatActivity : AppCompatActivity() {
         }
         val defaultOptions = JitsiMeetConferenceOptions.Builder()
             .setServerURL(serverURL)
+            /* .setAudioMuted(false)
+             .setVideoMuted(false)*/
             .setWelcomePageEnabled(false)
             .build()
         JitsiMeet.setDefaultConferenceOptions(defaultOptions)
@@ -270,10 +279,12 @@ class ChatActivity : AppCompatActivity() {
 
         btnCall.setOnClickListener {
             val opponent = sendTo.substring(0, sendTo.indexOf("@"))
-            val text = Config.loginName.plus("_${opponent}")
-            Log.v("@@@ROOM ID:::", text)
-
-            // Build options object for joining the conference. The SDK will merge the default
+            val room_name = Config.loginName.plus("_${opponent}")
+            Log.v("@@@ROOM ID:::", room_name)
+            val videoCallActivity = Intent(this, VideoCallActivity::class.java)
+            videoCallActivity.putExtra("room_name", room_name)
+            startActivity(videoCallActivity)
+/*            // Build options object for joining the conference. The SDK will merge the default
             // one we set earlier and this one when joining.
             // Build options object for joining the conference. The SDK will merge the default
             // one we set earlier and this one when joining.
@@ -284,19 +295,21 @@ class ChatActivity : AppCompatActivity() {
             val options = JitsiMeetConferenceOptions.Builder()
                 .setRoom(text)
                 .setUserInfo(userInfo)
-                .setFeatureFlag("pip.enabled", false)
-                .setFeatureFlag("chat.enabled", false)
+              *//*  .setFeatureFlag("pip.enabled", false)
+                .setAudioMuted(false)
+                .setVideoMuted(false)
+                .setFeatureFlag("chat.enabled", false)*//*
                 .setWelcomePageEnabled(false)
-                .build()
+                .build()*/
             // Launch the new activity with the given options. The launch() method takes care
             // of creating the required Intent and passing the options.
             // Launch the new activity with the given options. The launch() method takes care
             // of creating the required Intent and passing the options.
-            JitsiMeetActivity.launch(this, options)
+//            JitsiMeetActivity.launch(this, options)
 
             val msg = Message()
             msg.type = Message.Type.chat;
-            msg.body = text
+            msg.body = room_name
             msg.from = Config.conn1?.user
             msg.subject = ChatType.CALL.type
             msg.to = currentChat.xmppAddressOfChatPartner
