@@ -9,7 +9,10 @@ import android.view.Window
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.openfire.xmppchat.utils.Utils
 import kotlinx.android.synthetic.main.activity_chat_list.*
 import org.jivesoftware.smack.SmackException
 import org.jivesoftware.smack.XMPPException
@@ -70,15 +73,10 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
         })
         Config.multiUserChatManager!!.addInvitationListener { conn, room, inviter, reason, password, message, invitation ->
             //            Toast.makeText(this, "Invitation", Toast.LENGTH_SHORT).show()
-
+            if (room.isJoined) {
+                return@addInvitationListener
+            }
             try {
-                /*  var nickname: Resourcepart? = null
-                  try {
-                      nickname = Resourcepart.from(Config.conn1!!.user.asUnescapedString())
-                  } catch (e: XmppStringprepException) {
-                      e.printStackTrace()
-                  }
-  */
                 try {
                     val mucEnterConfiguration =
                         room.getEnterConfigurationBuilder(Resourcepart.from(Config.loginName))
@@ -86,20 +84,6 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
                             .build()
 
                     room.join(mucEnterConfiguration)
-//                    room.join(nickname); //while get invitation you need to join that room
-                    /*runOnUiThread {
-                        Handler().postDelayed({
-
-                            bookmarkManager.addBookmarkedConference(
-                                room.reservedNickname,
-                                room.room,
-                                true,
-                                Resourcepart.from(Config.loginName),
-                                ""
-                            )
-                        }, 2000)
-                    }*/
-
                 } catch (e: SmackException.NoResponseException) {
                     e.printStackTrace()
                 } catch (e: SmackException.NotConnectedException) {
@@ -129,41 +113,57 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
         adapter = RosterAdapter(rosterLists, map)
         adapterGroup = GroupAdapter(groupList)
         imgAddPerson.setOnClickListener {
+            /*
+                        val dialog = Dialog(this)
+                        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+                        val main = LinearLayout(this)
+                        main.orientation = LinearLayout.VERTICAL
+                        val editText = EditText(this)
+                        val editParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        )
+                        editParams.topMargin = 40
+                        editText.layoutParams = editParams
+                        val btn = Button(this)
+                        btn.text = "Chat"
+                        val btnParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        )
+                        btnParams.topMargin = 40
+                        btnParams.bottomMargin = 40
 
-            val dialog = Dialog(this)
-            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-            val main = LinearLayout(this)
-            main.orientation = LinearLayout.VERTICAL
-            val editText = EditText(this)
-            val editParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            editParams.topMargin = 40
-            editText.layoutParams = editParams
-            val btn = Button(this)
-            btn.text = "Chat"
-            val btnParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            btnParams.topMargin = 40
-            btnParams.bottomMargin = 40
+                        main.addView(editText)
+                        main.addView(btn)
+                        btn.setOnClickListener {
+                            dialog.dismiss()
+                            if (editText.text.isNotEmpty())
+                                openNewChat(editText.text.toString())
+                        }
+                        dialog.setContentView(main)
+                        dialog.show()*/
 
-            main.addView(editText)
-            main.addView(btn)
-            btn.setOnClickListener {
-                dialog.dismiss()
-                if (editText.text.isNotEmpty())
-                    openNewChat(editText.text.toString())
-            }
-            dialog.setContentView(main)
+            val builder = AlertDialog.Builder(this/*, R.style.fullScreenDialog*/)
+            val dialogView = layoutInflater.inflate(R.layout.dialog_create_entity, null)
+            builder.setView(dialogView)
+
+            val txtTitle = dialogView.findViewById<TextView>(R.id.txtTitle)
+            val etNew = dialogView.findViewById<EditText>(R.id.etNew)
+            val btnAddNew = dialogView.findViewById<Button>(R.id.btnAddNew)
+            txtTitle.text = "Start New Conversion"
+            val dialog = builder.create()
             dialog.show()
+            btnAddNew.setOnClickListener {
+                dialog.dismiss()
+                if (etNew.text.isNotEmpty())
+                    openNewChat(etNew.text.toString())
+            }
         }
 
         imgAddGroup.setOnClickListener {
 
-            val dialog = Dialog(this)
+          /*  val dialog = Dialog(this)
             dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
             val main = LinearLayout(this)
             main.orientation = LinearLayout.VERTICAL
@@ -191,9 +191,24 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
                     createNewGroup(editText.text.toString())
             }
             dialog.setContentView(main)
+            dialog.show()*/
+
+
+            val builder = AlertDialog.Builder(this/*, R.style.fullScreenDialog*/)
+            val dialogView = layoutInflater.inflate(R.layout.dialog_create_entity, null)
+            builder.setView(dialogView)
+
+            val txtTitle = dialogView.findViewById<TextView>(R.id.txtTitle)
+            val etNew = dialogView.findViewById<EditText>(R.id.etNew)
+            val btnAddNew = dialogView.findViewById<Button>(R.id.btnAddNew)
+            txtTitle.text = "Create Group"
+            val dialog = builder.create()
             dialog.show()
-
-
+            btnAddNew.setOnClickListener {
+                dialog.dismiss()
+                if (etNew.text.isNotEmpty())
+                    createNewGroup(etNew.text.toString())
+            }
         }
         adapter.setRoasterListener(this)
         rvRoasterList.adapter = adapter
@@ -234,28 +249,13 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
             ""
         )
 
-//        try {
-//            multiUserChat.sendMessage(Config.loginName + " : You have joined the group : " + groupName);
-//
-//            val presence =
-//                multiUserChat.getOccupantPresence(JidCreate.entityFullFrom(groupName + "@" + Config.openfire_host_server_CONFERENCE_SERVICE + "/" + Config.loginName))
-//            presence.mode = Presence.Mode.available
-//            Config.conn1!!.sendStanza(presence)
-//
-//        } catch (e: java.lang.Exception) {
-//            e.printStackTrace();
-//        }
-//        multiUserChat.grantOwnership(Config.conn1!!.user)
         multiUserChat.grantOwnership(Config.conn1!!.user)
 
-//        multiUserChat.changeNickname(Resourcepart.from(groupName))
 
         val form = multiUserChat.configurationForm
         val submitForm = form.createAnswerForm();
-// Add default answers to the form to submit
         for (field in form.getFields().iterator()) {
             if (FormField.Type.hidden != field.type && field.variable != null) {
-// Sets the default value as the answer
                 submitForm.setDefaultAnswer(field.getVariable());
             }
         }
@@ -270,38 +270,17 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
 
 
         multiUserChat.sendConfigurationForm(submitForm)
-    /*    for (entry in Config.roster!!.entries) {
-            val userJID = JidCreate.entityBareFrom(entry.jid)
-            try {
-//                multiUserChat.changeAvailabilityStatus()
-                multiUserChat.invite(userJID, "Welcome")
-//                multiUserChat.outcasts.
-                multiUserChat.grantMembership(userJID)
-//                multiUserChat.grantModerator(Resourcepart.from(userJID.localpart.asUnescapedString()))
-
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }*/
 
         getBuddies()
     }
 
-    /* override fun onResume() {
-         super.onResume()
-         getBuddies()
-     }
- */
     private fun openNewChat(newUser: String) {
-
 
         Config.roster?.createEntry(
             JidCreate.bareFrom(newUser + "@" + Config.openfire_host_server_SERVICE),
             newUser + "@" + Config.openfire_host_server_SERVICE,
             null
         )
-
-
         val intent = Intent(this, ChatActivity::class.java)
         intent.putExtra("user", newUser + "@" + Config.openfire_host_server_SERVICE)
         startActivity(intent)
@@ -342,7 +321,7 @@ class ChatListActivity : AppCompatActivity(), RosterAdapter.RoasterClickListener
         }
 
         val entries = Config.roster?.entries
-        val  rosterLists= arrayListOf<RosterEntry>()
+        val rosterLists = arrayListOf<RosterEntry>()
 
         Log.e("Size of Roster :", "" + entries?.size)
         if (entries != null) {

@@ -72,7 +72,7 @@ class ChatAdapter(
                     holder.name.text = msg.from/*.resourceOrEmpty*/
                     holder.name.visibility = View.VISIBLE
                 } else {
-                    holder.name.visibility = View.VISIBLE
+                    holder.name.visibility = View.GONE
                 }
             }
         } else if (viewType == ChatType.IMAGE.viewType) {
@@ -88,7 +88,7 @@ class ChatAdapter(
                     holder.name.text = msg.from/*.resourceOrEmpty*/
                     holder.name.visibility = View.VISIBLE
                 } else {
-                    holder.name.visibility = View.VISIBLE
+                    holder.name.visibility = View.GONE
                 }
             }
         } else {

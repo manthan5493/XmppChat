@@ -28,7 +28,7 @@ class GroupUserAdapter(
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         val occupant = data[position]
-        holder.name.text = occupant.nick
+        holder.name.text = occupant.jid.asUnescapedString()
         holder.role.text = occupant.affiliation!!.name
         /* holder.itemView.setOnClickListener {
              listener?.onGroupClick(groupInfo)

@@ -1,6 +1,7 @@
 package com.openfire.xmppchat
 
 import org.jivesoftware.smack.AbstractXMPPConnection
+import org.jivesoftware.smack.chat2.ChatManager
 import org.jivesoftware.smack.roster.Roster
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration
 import org.jivesoftware.smackx.muc.MultiUserChatManager
@@ -12,9 +13,10 @@ class Config {
 
         var conn1: AbstractXMPPConnection? = null
         var roster: Roster? = null
-        var multiUserChatManager:MultiUserChatManager?=null
+        var multiUserChatManager: MultiUserChatManager? = null
 
         var loginName: String? = null
+        var chatManager: ChatManager? = null
 
         //        val openfire_host_server_IP = "xx.x.x.x.x.x.x." //(Example : 127.0.0.1)
         val openfire_host_server_HOST_DEMO = "192.168.11.171" //(Example : 127.0.0.1)

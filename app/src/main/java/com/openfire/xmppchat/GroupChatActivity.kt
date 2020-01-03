@@ -22,6 +22,14 @@ import org.jivesoftware.smackx.muc.MultiUserChat
 import org.jxmpp.jid.impl.JidCreate
 import java.io.File
 import java.io.IOException
+import org.jivesoftware.smackx.muc.DiscussionHistory
+import com.dropbox.core.v2.teamlog.ActorLogInfo.app
+import androidx.core.app.ComponentActivity.ExtraData
+import androidx.core.content.ContextCompat.getSystemService
+import org.jivesoftware.smackx.mam.MamManager
+import org.jivesoftware.smackx.muc.packet.MUCInitialPresence
+import org.jxmpp.jid.parts.Resourcepart
+
 
 class GroupChatActivity : AppCompatActivity() {
 
@@ -36,6 +44,8 @@ class GroupChatActivity : AppCompatActivity() {
         groupId = intent.getStringExtra("group")
         mucChat =
             Config.multiUserChatManager!!.getMultiUserChat(JidCreate.entityBareFrom(groupId))
+
+
         mucChat.addMessageListener { message ->
             if (message != null) {
                 Log.e("Message Received : ", message.body)
@@ -58,9 +68,14 @@ class GroupChatActivity : AppCompatActivity() {
             }
         }
 
-        adapter = ChatAdapter(messages, Config.conn1!!.user.asEntityBareJid(),true)
+        adapter = ChatAdapter(messages, Config.conn1!!.user.asEntityBareJid(), true)
         rvMessage.adapter = adapter
         setAction()
+
+        /*val mamManager = MamManager.getInstanceFor(mucChat)
+        //enable it for fetching messages
+        mamManager.enableMamForAllMessages()*/
+//        mamManager.queryMostRecentPage(mucChat.room,20)
     }
 
     private fun setAction() {

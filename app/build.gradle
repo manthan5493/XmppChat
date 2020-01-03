@@ -58,7 +58,7 @@ dependencies {
     implementation "org.igniterealtime.smack:smack-experimental:4.3.4"
     implementation "org.igniterealtime.smack:smack-android:4.3.4"
     implementation 'org.igniterealtime.smack:smack-resolver-dnsjava:4.3.4'
-
+    implementation 'org.igniterealtime.smack:smack-sasl-provided:4.3.4'
 
     // JISTI Meet Video Conference
     implementation('org.jitsi.react:jitsi-meet-sdk:2.5.0') { transitive = true }

@@ -5,12 +5,6 @@ import android.widget.Toast
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
-import androidx.lifecycle.ProcessLifecycleOwner
-import org.jivesoftware.smack.packet.Presence
-import org.jivesoftware.smackx.bookmarks.BookmarkManager
-import org.jivesoftware.smackx.muc.bookmarkautojoin.MucBookmarkAutojoinManager
-import org.jxmpp.jid.impl.JidCreate
-import org.jxmpp.jid.parts.Resourcepart
 
 
 class ChatApp : Application(), LifecycleObserver {

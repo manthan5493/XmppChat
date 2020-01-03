@@ -1,28 +1,28 @@
 package com.openfire.xmppchat
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
 import android.os.AsyncTask
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.esafirm.imagepicker.features.ImagePicker
 import com.esafirm.imagepicker.features.ReturnMode
 import com.esafirm.imagepicker.model.Image
 import kotlinx.android.synthetic.main.activity_chat.*
 import okhttp3.*
 import org.jitsi.meet.sdk.JitsiMeet
-import org.jitsi.meet.sdk.JitsiMeetActivity
 import org.jitsi.meet.sdk.JitsiMeetConferenceOptions
-import org.jitsi.meet.sdk.JitsiMeetUserInfo
 import org.jivesoftware.smack.SmackException
 import org.jivesoftware.smack.XMPPException
 import org.jivesoftware.smack.chat.ChatManagerListener
 import org.jivesoftware.smack.chat2.Chat
-import org.jivesoftware.smack.chat2.ChatManager
 import org.jivesoftware.smack.packet.Message
 import org.jivesoftware.smackx.httpfileupload.HttpFileUploadManager
 import org.jivesoftware.smackx.iqlast.LastActivityManager
@@ -36,7 +36,7 @@ import java.net.URL
 
 
 class ChatActivity : AppCompatActivity() {
-    lateinit var chatManager: ChatManager
+    //    lateinit var chatManager: ChatManager
     lateinit var currentChat: Chat
     lateinit var sendTo: String
     lateinit var adapter: ChatAdapter
@@ -52,17 +52,17 @@ class ChatActivity : AppCompatActivity() {
                     Log.e("Message TO : ", message.to.asUnescapedString())
                     if (message.from.split("/")[0] == chat.participant.split("/")[0]) {
                         runOnUiThread {
-                            Toast.makeText(this, "MSG::" + message.body, Toast.LENGTH_SHORT)
-                                .show()
+                            /*   Toast.makeText(this, "MSG::" + message.body, Toast.LENGTH_SHORT)
+                                   .show()*/
                             messages.add(message)
                             rvMessage.scrollToPosition(messages.size - 1)
                             adapter.notifyItemInserted(messages.size)
                         }
                     } else {
-                        runOnUiThread {
+                        /*runOnUiThread {
                             Toast.makeText(this, "NEW::" + message.body, Toast.LENGTH_SHORT)
                                 .show()
-                        }
+                        }*/
                     }
                 }
 //                Log.w("app", chat.toString())
@@ -75,18 +75,17 @@ class ChatActivity : AppCompatActivity() {
         Log.e("CURRENT ", "USER" + Config.conn1!!.user)
         getBundleData()
 
-        chatManager = ChatManager.getInstanceFor(Config.conn1)
         adapter = ChatAdapter(messages, Config.conn1!!.user.asEntityBareJid())
         rvMessage.adapter = adapter
         currentChat =
-            chatManager.chatWith(JidCreate.entityBareFrom(sendTo) /*+ "/" + Config.openfire_host_server_RESOURCE*/)
+            Config.chatManager!!.chatWith(JidCreate.entityBareFrom(sendTo) /*+ "/" + Config.openfire_host_server_RESOURCE*/)
 
 
-        initMeetingConfig()
+//        initMeetingConfig()
         setAction()
         setMsgListener()
-        val lManager = LastActivityManager.getInstanceFor(Config.conn1)
-        if (lManager.isLastActivitySupported(JidCreate.entityBareFrom(sendTo))) {
+        try {
+            val lManager = LastActivityManager.getInstanceFor(Config.conn1)
             val lastActivity = lManager.getLastActivity(JidCreate.entityBareFrom(sendTo))
 
             if (lastActivity.lastActivity > 0)
@@ -95,6 +94,8 @@ class ChatActivity : AppCompatActivity() {
                     getAgo(lastActivity.lastActivity),
                     Toast.LENGTH_SHORT
                 ).show()
+        } catch (ex: java.lang.Exception) {
+            ex.printStackTrace()
         }
     }
 
@@ -110,7 +111,7 @@ class ChatActivity : AppCompatActivity() {
                 convTime = "" + second / 60 + " Minutes " + suffix
             }
             second < 60 * 60 * 24 -> {
-                convTime = "" + second / (60 * 60) + " Hours " + suffix;
+                convTime = "" + second / (60 * 60) + " Hours " + suffix
             } /*else if (day >= 7) {
                 if (day > 360) {
                     convTime = (day / 30) + " Years " + suffix;
@@ -121,7 +122,7 @@ class ChatActivity : AppCompatActivity() {
                 }
             }*/
             second < 60 * 60 * 24 * 7 -> {
-                convTime = "" + second / (60 * 60 * 24) + " Days " + suffix;
+                convTime = "" + second / (60 * 60 * 24) + " Days " + suffix
             }
             else -> {
                 convTime = "long time ago"
@@ -140,33 +141,48 @@ class ChatActivity : AppCompatActivity() {
          }*/
         val offlineMessageManager = OfflineMessageManager(Config.conn1)
         offlineMessage = offlineMessageManager.messages.filter {
-            it.from.contains(sendTo)
+            it.from.contains(sendTo) && (it.subject != ChatType.CALL_CONNECT.type || it.subject != ChatType.CALL_DISCONNECT.type)
         }
         val nodeToBeDelete = arrayListOf<String>()
 
         for (offline in offlineMessage) {
-            nodeToBeDelete.add(
-                offline.getExtension<OfflineMessageInfo>(
-                    "offline",
-                    "http://jabber.org/protocol/offline"
-                ).node
-            )
+            /* nodeToBeDelete.add(
+                 offline.getExtension<OfflineMessageInfo>(
+                     "offline",
+                     "http://jabber.org/protocol/offline"
+                 ).node
+             )*/
+            for (extenstion in offline.getExtensions(
+                "offline",
+                "http://jabber.org/protocol/offline"
+            )) {
+                if (extenstion is OfflineMessageInfo) {
+                    nodeToBeDelete.add(
+                        extenstion.node
+                    )
+                }
+            }
         }
-        offlineMessageManager.deleteMessages(nodeToBeDelete)
+        try {
+            offlineMessageManager.deleteMessages(nodeToBeDelete)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         messages.addAll(offlineMessage)
     }
 
     private fun setMsgListener() {
-        if (::chatManager.isInitialized) {
-            chatManager.addIncomingListener { from, message, chat ->
-                if (message != null) {
-                    Log.e("Message Received : ", message.body)
+
+        Config.chatManager!!.addIncomingListener { from, message, chat ->
+            if (message != null) {
+                Log.e("Message Received : ", message.body)
 //                    Log.e("Message ID : ", message.stanzaId)
-                    Log.e("Message TO : ", message.to.asUnescapedString())
-                    if (message.subject == ChatType.CALL.type) {
-                        incomingCall(message.body)
-                        return@addIncomingListener
-                    }
+                Log.e("Message TO : ", message.to.asUnescapedString())
+                if (message.subject == ChatType.CALL_CONNECT.type) {
+                    incomingCall(message.body)
+                } else if (message.subject == ChatType.CALL_DISCONNECT.type) {
+                    disconnectCall(message.body)
+                } else {
                     if (message.from.asBareJid()/*.split("/")[0]*/ == chat.xmppAddressOfChatPartner/*.split("/")[0]*/) {
                         runOnUiThread {
                             Toast.makeText(this, "MSG::" + message.body, Toast.LENGTH_SHORT)
@@ -182,12 +198,17 @@ class ChatActivity : AppCompatActivity() {
                         }
                     }
                 }
-                Log.w("app", chat.toString())
             }
-//            chatManager.addChatListener(listener)
-        } else {
-            Log.e("Else Part ", "Connection Null")
+            Log.w("app", chat.toString())
         }
+    }
+
+    private fun disconnectCall(roomName: String) {
+        val intent = Intent("call_dc_receiver")
+        intent.putExtra("disconnected_room", roomName)
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+
+//        finishActivity(2001)
     }
 
     private fun incomingCall(roomName: String) {
@@ -211,7 +232,7 @@ class ChatActivity : AppCompatActivity() {
 
         val videoCallActivity = Intent(this, VideoCallActivity::class.java)
         videoCallActivity.putExtra("room_name", roomName)
-        startActivity(videoCallActivity)
+        startActivityForResult(videoCallActivity, 2001)
 
     }
 
@@ -283,7 +304,7 @@ class ChatActivity : AppCompatActivity() {
             Log.v("@@@ROOM ID:::", room_name)
             val videoCallActivity = Intent(this, VideoCallActivity::class.java)
             videoCallActivity.putExtra("room_name", room_name)
-            startActivity(videoCallActivity)
+            startActivityForResult(videoCallActivity, 2001)
 /*            // Build options object for joining the conference. The SDK will merge the default
             // one we set earlier and this one when joining.
             // Build options object for joining the conference. The SDK will merge the default
@@ -311,7 +332,7 @@ class ChatActivity : AppCompatActivity() {
             msg.type = Message.Type.chat;
             msg.body = room_name
             msg.from = Config.conn1?.user
-            msg.subject = ChatType.CALL.type
+            msg.subject = ChatType.CALL_CONNECT.type
             msg.to = currentChat.xmppAddressOfChatPartner
 
             sendMessage(msg)
@@ -319,12 +340,28 @@ class ChatActivity : AppCompatActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
         if (ImagePicker.shouldHandle(requestCode, resultCode, data)) {
             val image = ImagePicker.getFirstImageOrNull(data)
             if (image != null)
                 sendImage(image)
         }
-        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == 2001) {
+            if (resultCode == Activity.RESULT_OK) {
+                Handler().postDelayed({
+                    val msg = Message()
+                    msg.type = Message.Type.chat;
+                    msg.body = etMsg.text.toString()
+                    msg.from = Config.conn1?.user
+                    msg.subject = ChatType.CALL_DISCONNECT.type
+                    msg.to = currentChat.xmppAddressOfChatPartner
+
+                    sendMessage(msg)
+                }, 650)
+
+            }
+        }
     }
 
     private fun sendImage(image: Image) {
@@ -342,7 +379,8 @@ class ChatActivity : AppCompatActivity() {
             client.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     e.printStackTrace()
-                    Toast.makeText(this@ChatActivity, "onFailure", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ChatActivity, "fail to send file", Toast.LENGTH_SHORT)
+                        .show()
                 }
 
                 override fun onResponse(call: Call, response: Response) {
@@ -380,7 +418,7 @@ class ChatActivity : AppCompatActivity() {
 
             override fun onPostExecute(result: Unit?) {
                 super.onPostExecute(result)
-                if (msgBody.subject != ChatType.CALL.type) {
+                if (msgBody.subject != ChatType.CALL_CONNECT.type || msgBody.subject != ChatType.CALL_DISCONNECT.type) {
                     messages.add(msgBody)
                     adapter.notifyItemInserted(messages.size)
                     rvMessage.scrollToPosition(messages.size - 1)

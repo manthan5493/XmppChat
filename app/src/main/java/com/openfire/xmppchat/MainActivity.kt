@@ -8,11 +8,12 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.openfire.xmppchat.utils.Utils
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jivesoftware.smack.ConnectionConfiguration
 import org.jivesoftware.smack.ReconnectionManager
-import org.jivesoftware.smack.SASLAuthentication
 import org.jivesoftware.smack.SmackConfiguration
+import org.jivesoftware.smack.chat2.ChatManager
 import org.jivesoftware.smack.provider.ProviderManager
 import org.jivesoftware.smack.roster.Roster
 import org.jivesoftware.smack.sasl.provided.SASLPlainMechanism
@@ -34,7 +35,6 @@ import org.jivesoftware.smackx.muc.provider.MUCOwnerProvider
 import org.jivesoftware.smackx.muc.provider.MUCUserProvider
 import org.jivesoftware.smackx.offline.packet.OfflineMessageInfo
 import org.jivesoftware.smackx.offline.packet.OfflineMessageRequest
-import org.jivesoftware.smackx.ping.android.ServerPingWithAlarmManager
 import org.jivesoftware.smackx.ping.provider.PingProvider
 import org.jivesoftware.smackx.privacy.provider.PrivacyProvider
 import org.jivesoftware.smackx.pubsub.provider.EventProvider
@@ -54,15 +54,20 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        initialiseConnection()
+        ProviderManager.addIQProvider(
+            "query", "jabber:iq:last",
+            LastActivity.Provider()
+        )
         btnLogin.setOnClickListener {
             if (etUser.text.toString().isNotEmpty() && etPassword.text.toString().isNotEmpty())
-                login(etUser.text.toString(), etPassword.text.toString())
-//            Socket[address=openfire.brainvire.dev/192.168.10.86,port=5222,localPort=47750]
+                initialiseConnection(false, etUser.text.toString(), etPassword.text.toString())
+//            login(etUser.text.toString(), etPassword.text.toString())
         }
         btnRegister.setOnClickListener {
             if (etUser.text.toString().isNotEmpty() && etPassword.text.toString().isNotEmpty())
-                register(etUser.text.toString(), etPassword.text.toString())
+//                register(etUser.text.toString(), etPassword.text.toString())
+                initialiseConnection(true, etUser.text.toString(), etPassword.text.toString())
+
         }
 //        startService(Intent(this, OnClearFromRecentService::class.java))
     }
@@ -92,10 +97,12 @@ class MainActivity : AppCompatActivity() {
                     if (result.isEmpty()) {
                         login(userName, password)
                     } else {
+                        Utils.hideProgress()
                         Toast.makeText(this@MainActivity, result, Toast.LENGTH_SHORT)
                             .show()
                     }
                 } else {
+                    Utils.hideProgress()
                     Toast.makeText(this@MainActivity, "Something went wrong", Toast.LENGTH_SHORT)
                         .show()
                 }
@@ -306,7 +313,22 @@ class MainActivity : AppCompatActivity() {
         object : AsyncTask<Void, Void, Boolean>() {
             override fun doInBackground(vararg params: Void?): Boolean {
                 try {
+                    /*     SASLAuthentication.registerSASLMechanism(SASLPlainMechanism())
+                         SASLAuthentication.registerSASLMechanism(SASLXOauth2Mechanism())
+                         SASLAuthentication.registerSASLMechanism(SASLDigestMD5Mechanism())
+                         SASLAuthentication.registerSASLMechanism(SASLExternalMechanism())
 
+                         SASLAuthentication.isSaslMechanismRegistered()
+
+                         SASLAuthentication.unBlacklistSASLMechanism("c")
+                         SASLAuthentication.blacklistSASLMechanism("SCRAM -SHA - 1")
+                         SASLAuthentication.blacklistSASLMechanism("DIGEST -MD5")
+                         val registeredSASLMechanisms = SASLAuthentication.getRegisterdSASLMechanisms()
+                         for (mechanism in registeredSASLMechanisms.values) {
+                             SASLAuthentication.blacklistSASLMechanism(mechanism)
+                         }
+                         SASLAuthentication.unBlacklistSASLMechanism(SASLPlainMechanism.NAME)
+     */
                     Config.conn1!!.login(userName, password)
 
                     if (Config.conn1!!.isAuthenticated) {
@@ -327,11 +349,14 @@ class MainActivity : AppCompatActivity() {
             override fun onPostExecute(result: Boolean?) {
                 super.onPostExecute(result)
                 if (result == true) {
+                    startService(Intent(this@MainActivity, OnClearFromRecentService::class.java))
                     Config.loginName = userName
-                    Toast.makeText(this@MainActivity, "Logged In", Toast.LENGTH_SHORT).show()
+//                    Toast.makeText(this@MainActivity, "Logged In", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this@MainActivity, ChatListActivity::class.java))
                     ActivityCompat.finishAffinity(this@MainActivity)
+                    Utils.hideProgress()
                 } else {
+                    Utils.hideProgress()
                     Toast.makeText(this@MainActivity, "Auth Fail", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -340,7 +365,27 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun initialiseConnection() {
+    private fun initialiseConnection(isRegister: Boolean, userName: String, password: String) {
+        Utils.showProgress(this)
+/*        SASLAuthentication.blacklistSASLMechanism("SCRAM -SHA - 1")
+        SASLAuthentication.blacklistSASLMechanism("DIGEST -MD5")*/
+        /*     val registeredSASLMechanisms = SASLAuthentication.getRegisterdSASLMechanisms()
+             for (mechanism in registeredSASLMechanisms.values) {
+                 SASLAuthentication.blacklistSASLMechanism(mechanism)
+             }
+             SASLAuthentication.unBlacklistSASLMechanism("SASLMech: SCRAM-SHA-1")
+             SASLAuthentication.unBlacklistSASLMechanism("SASLMech: SCRAM-SHA-1-PLUS")
+             SASLAuthentication.unBlacklistSASLMechanism("SASLMech: DIGEST-MD5")
+             SASLAuthentication.unBlacklistSASLMechanism(SASLXOauth2Mechanism.PLAIN)
+             SASLAuthentication.unBlacklistSASLMechanism(SASLXOauth2Mechanism.NAME)
+     */
+//        SASLAuthentication.unregisterSASLMechanism("org.jivesoftware.smack.sasl.javax.SASLDigestMD5Mechanism");
+
+        if (Config.conn1 != null) {
+            Config.conn1?.disconnect()
+            Config.conn1 = null
+
+        }
         SmackConfiguration.addDisabledSmackClass("org.jivesoftware.smack.util.dns.minidns.MiniDnsResolver")
         val connectionConfigBuilder = XMPPTCPConnectionConfiguration.builder()
 //            .setUsernameAndPassword("test3", "12345")
@@ -353,22 +398,23 @@ class MainActivity : AppCompatActivity() {
             .setPort(Config.openfire_host_server_PORT)
             .setConnectTimeout(5000)
             .enableDefaultDebugger()
+            .addEnabledSaslMechanism(SASLPlainMechanism.NAME)
             .setSendPresence(false)
 //            .setDebuggerEnabled(true) // to view what's happening in detail
 
         try {
             TLSUtils.acceptAllCertificates(connectionConfigBuilder)
         } catch (e: Exception) {
-            e.printStackTrace();
+            e.printStackTrace()
         }
-        SASLAuthentication.unBlacklistSASLMechanism("c")
-        SASLAuthentication.blacklistSASLMechanism("SCRAM -SHA - 1")
-        SASLAuthentication.blacklistSASLMechanism("DIGEST -MD5")
-        val registeredSASLMechanisms = SASLAuthentication.getRegisterdSASLMechanisms()
-        for (mechanism in registeredSASLMechanisms.values) {
-            SASLAuthentication.blacklistSASLMechanism(mechanism)
-        }
-        SASLAuthentication.unBlacklistSASLMechanism(SASLPlainMechanism.NAME)
+        /*     SASLAuthentication.unBlacklistSASLMechanism("c")
+             SASLAuthentication.blacklistSASLMechanism("SCRAM -SHA - 1")
+             SASLAuthentication.blacklistSASLMechanism("DIGEST -MD5")
+             val registeredSASLMechanisms = SASLAuthentication.getRegisterdSASLMechanisms()
+             for (mechanism in registeredSASLMechanisms.values) {
+                 SASLAuthentication.blacklistSASLMechanism(mechanism)
+             }
+             SASLAuthentication.unBlacklistSASLMechanism(SASLPlainMechanism.NAME)*/
 
         Config.config = connectionConfigBuilder.build()
 
@@ -377,35 +423,7 @@ class MainActivity : AppCompatActivity() {
             override fun doInBackground(vararg params: Void?): Boolean {
                 val conn1 = XMPPTCPConnection(Config.config)
                 conn1.replyTimeout = 5000
-                /*  conn1.addConnectionListener(object : ConnectionListener {
 
-                      override fun connected(connection: XMPPConnection?) {
-                          Log.e("CONNECTION", "connected")
-                      }
-
-                      override fun connectionClosed() {
-                          Log.e("CONNECTION", "connectionClosed")
-
-                      }
-
-                      override fun connectionClosedOnError(e: java.lang.Exception?) {
-                          e?.printStackTrace()
-                          Log.e("CONNECTION", "connectionClosedOnError")
-
-                      }
-
-                      override fun authenticated(
-                          connection: XMPPConnection?,
-                          resumed: Boolean
-                      ) {
-                          Log.e("CONNECTION", "authenticated")
-
-                      }
-
-                  })*/
-
-//                conn1.packetReplyTimeout =
-//                    5000 // If not connected within 5 seconds then conn1 will be disconnected
                 try {
                     conn1.setUseStreamManagement(true)
                     conn1.setUseStreamManagementResumption(true)
@@ -414,13 +432,7 @@ class MainActivity : AppCompatActivity() {
                     val connection = conn1.connect()
                     if (conn1.isConnected) {
                         Config.conn1 = connection
-
                     }
-//
-//                    val ping = PingManager.getInstanceFor(Config.conn1)
-//                    ping.pingInterval = 60
-//                    ping.pingServerIfNecessary()
-
                 } catch (e: Exception) {
                     e.printStackTrace()
                     Log.e("app", e.toString())
@@ -431,6 +443,7 @@ class MainActivity : AppCompatActivity() {
             override fun onPostExecute(result: Boolean?) {
                 super.onPostExecute(result)
                 if (result == true) {
+                    Config.chatManager = ChatManager.getInstanceFor(Config.conn1)
                     Config.multiUserChatManager = MultiUserChatManager.getInstanceFor(Config.conn1)
                     Config.multiUserChatManager!!.setAutoJoinOnReconnect(true)
                     Config.roster = Roster.getInstanceFor(Config.conn1)
@@ -438,9 +451,16 @@ class MainActivity : AppCompatActivity() {
                     MucBookmarkAutojoinManager.getInstanceFor(Config.conn1).setAutojoinEnabled(true)
 
 //                    configure()
+
+                    if (isRegister) {
+                        register(userName, password)
+                    } else {
+                        login(userName, password)
+                    }
                     btnLogin.isEnabled = true
                     btnRegister.isEnabled = true
                 } else {
+                    Utils.hideProgress()
                     Toast.makeText(this@MainActivity, "Not Connected", Toast.LENGTH_SHORT)
                         .show()
                 }

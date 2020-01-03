@@ -6,5 +6,7 @@ enum class ChatType(val type: String, val viewType: Int) {
     AUDIO("audio", 3),
     VIDEO("video", 4),
     FILE("file", 5),
-    CALL("CALL", 6)
+    CALL_CONNECT("CALL_CONNECT", 7),
+    CALL_DISCONNECT("CALL_DISCONNECT", 8)
+
 }
